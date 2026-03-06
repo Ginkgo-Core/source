@@ -1,0 +1,244 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "3b525504-c3b9-422b-9600-0c8410909909",
+      "name": "Download Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        128,
+        1072
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Converte o arquivo binário baixado para base64\nconst binaryKey = Object.keys(items[0].binary || {})[0];\nif (!binaryKey) throw new Error('Nenhum arquivo binário encontrado no input');\n\nconst binaryData = items[0].binary[binaryKey];\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binaryKey);\nconst base64 = buffer.toString('base64');\n\nreturn [{\n  json: {\n    ...items[0].json,\n    fileBase64: base64,\n    fileName: binaryData.fileName || 'documento.pdf',\n    mimeType: binaryData.mimeType || 'application/octet-stream',\n    fileSize: buffer.length\n  }\n}];"
+      },
+      "id": "6ecb6100-3342-4905-adc6-e4a611d2f5c8",
+      "name": "Doc → Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        1072
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.manus.ai/v1/files",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"file\": \"{{ $json.fileBase64 }}\",\n  \"filename\": \"{{ $json.fileName }}\",\n  \"mime_type\": \"{{ $json.mimeType }}\"\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "1e4ad4cf-6be0-4e7e-b349-7133377f2054",
+      "name": "HTTP Upload Manus",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        1072
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "bEBj72wrDwAOpbL7",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "id": "4cde50a1-8729-4e1b-ae0e-e0ffb923606f",
+      "name": "Wait Processamento",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        800,
+        1072
+      ],
+      "webhookId": "255f1793-f74c-4fe1-a280-c762373bf01e"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.manus.ai/v1/files/{{ $('HTTP Upload Manus').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "ef8aebb7-8ed8-4326-a02a-c8558d9a6250",
+      "name": "HTTP Consultar Manus",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1024,
+        1072
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "bEBj72wrDwAOpbL7",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "numero_lead",
+              "name": "numero_lead",
+              "value": "={{ $('Download Document').item.json.numero_lead || $json.numero_lead }}",
+              "type": "string"
+            },
+            {
+              "id": "texto_transcrito",
+              "name": "texto_transcrito",
+              "value": "={{ $json.transcription || $json.content || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "tipo_documento",
+              "name": "tipo_documento",
+              "value": "={{ $('Doc → Base64').item.json.mimeType }}",
+              "type": "string"
+            },
+            {
+              "id": "file_id",
+              "name": "file_id",
+              "value": "={{ $('HTTP Upload Manus').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "file_name",
+              "name": "file_name",
+              "value": "={{ $('Doc → Base64').item.json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ad405565-9e0b-4336-9b8d-6c077618a454",
+      "name": "Set Extrair Transcrição",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        1072
+      ]
+    }
+  ],
+  "connections": {
+    "Download Document": {
+      "main": [
+        [
+          {
+            "node": "Doc → Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doc → Base64": {
+      "main": [
+        [
+          {
+            "node": "HTTP Upload Manus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Upload Manus": {
+      "main": [
+        [
+          {
+            "node": "Wait Processamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Processamento": {
+      "main": [
+        [
+          {
+            "node": "HTTP Consultar Manus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Consultar Manus": {
+      "main": [
+        [
+          {
+            "node": "Set Extrair Transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Extrair Transcrição": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7f039fbb73f2502279c9176f75c5092ce304d6a8ac6cde298982ae7b55f5e97",
+    "notes": "Pipeline de documentos v29 - arquitetura limpa sem PUT S3 desnecessário"
+  }
+}
