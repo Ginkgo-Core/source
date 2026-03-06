@@ -1,0 +1,394 @@
+{
+  "name": "Doc Pipeline v30 - Manus Tasks API",
+  "nodes": [
+    {
+      "id": "92d821fe-1012-46ab-b573-0c7341755ec1",
+      "name": "Download Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        128,
+        1072
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.document_url }}",
+        "responseFormat": "file",
+        "options": {}
+      }
+    },
+    {
+      "id": "8818b207-f380-4955-a8e5-2129621549e1",
+      "name": "Doc → Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        1072
+      ],
+      "parameters": {
+        "jsCode": "\nconst item = $input.item;\nconst binaryData = item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('Nenhum dado binário encontrado no input');\n}\n\n// Pega o buffer binário e converte para base64\nconst buffer = await this.helpers.getBinaryDataBuffer(item, 'data');\nconst base64 = buffer.toString('base64');\n\n// Extrai metadados do arquivo\nconst fileName = binaryData.fileName || 'documento.pdf';\nconst mimeType = binaryData.mimeType || 'application/pdf';\nconst fileSize = buffer.length;\n\nreturn [{\n  json: {\n    ...item.json,\n    fileBase64: base64,\n    fileName: fileName,\n    mimeType: mimeType,\n    fileSize: fileSize\n  },\n  binary: item.binary\n}];\n"
+      }
+    },
+    {
+      "id": "d2b5dd19-87b7-4fde-abfc-c459a82455c7",
+      "name": "HTTP Upload Manus",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        1072
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.manus.ai/v1/files",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"filename\": \"{{ $json.fileName }}\"\n}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "manus-api-key",
+          "name": "Manus API Key"
+        }
+      }
+    },
+    {
+      "id": "da05e77c-9f1a-4a8f-8472-ba8070a92f61",
+      "name": "PUT Upload S3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1072
+      ],
+      "parameters": {
+        "jsCode": "\n// Pega dados dos nós anteriores\nconst uploadUrl = $('HTTP Upload Manus').item.json.upload_url;\nconst fileId    = $('HTTP Upload Manus').item.json.id;\nconst base64    = $('Doc → Base64').item.json.fileBase64;\nconst mimeType  = $('Doc → Base64').item.json.mimeType;\nconst fileName  = $('Doc → Base64').item.json.fileName;\n\nif (!uploadUrl) throw new Error('upload_url não encontrado');\nif (!base64)    throw new Error('fileBase64 não encontrado');\n\n// Converte base64 para buffer e faz PUT para o S3\nconst buffer = Buffer.from(base64, 'base64');\n\nconst response = await this.helpers.request({\n  method: 'PUT',\n  url: uploadUrl,\n  body: buffer,\n  headers: {\n    'Content-Type': mimeType\n  },\n  encoding: null,\n  resolveWithFullResponse: true\n});\n\nreturn [{\n  json: {\n    file_id: fileId,\n    upload_status: response.statusCode,\n    fileName: fileName,\n    mimeType: mimeType,\n    numero_lead: $input.item.json.numero_lead || null\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "44699205-24b8-4509-bace-e9344fb1e12f",
+      "name": "Criar Task Transcrição",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1024,
+        1072
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.manus.ai/v1/tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"prompt\": \"Analise e transcreva completamente o conteúdo deste documento. Extraia todo o texto, tabelas, listas e informações relevantes. Retorne o conteúdo completo de forma organizada e estruturada em português.\",\n  \"agentProfile\": \"manus-1.6\",\n  \"taskMode\": \"agent\",\n  \"hideInTaskList\": true,\n  \"attachments\": [\n    {\n      \"type\": \"file_id\",\n      \"file_id\": \"{{ $json.file_id }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "manus-api-key",
+          "name": "Manus API Key"
+        }
+      }
+    },
+    {
+      "id": "12674199-204c-4b41-86b5-c94d7b87a265",
+      "name": "Wait Inicial",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        1072
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "value": 30
+      },
+      "webhookId": "8ce1dee1-54e2-4220-a7ea-01f39553dd8a"
+    },
+    {
+      "id": "ca60554d-5d0d-4050-b462-addffc6f1c49",
+      "name": "GET Status Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        1072
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.manus.ai/v1/tasks/{{ $('Criar Task Transcrição').item.json.task_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "manus-api-key",
+          "name": "Manus API Key"
+        }
+      }
+    },
+    {
+      "id": "39c664b7-60b4-41eb-8d38-a22f934204dd",
+      "name": "Task Completou?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1072
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "15716b62-1362-4b38-875b-192b9106e070",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "e6c151ac-3802-4d62-9e4a-54bfc94781b4",
+      "name": "Wait Retry",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        1200
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "value": 15
+      },
+      "webhookId": "4413f3ab-5391-4dcb-8b57-3d754c93246b"
+    },
+    {
+      "id": "68fe876f-b541-4cfe-8e11-6121efc4b768",
+      "name": "Set Extrair Transcrição",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        944
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "24b1b437-6b54-4fc6-8f87-adc8ba495dfa",
+              "name": "numero_lead",
+              "value": "={{ $('PUT Upload S3').item.json.numero_lead }}",
+              "type": "string"
+            },
+            {
+              "id": "075e0436-50de-4665-a990-62393eb281e5",
+              "name": "texto_transcrito",
+              "value": "={{ $json.output?.filter(m => m.role === 'assistant').map(m => m.content?.filter(c => c.type === 'output_text').map(c => c.text).join('\\n')).join('\\n\\n') || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "1646d305-74ec-486e-8149-5f707b582f9b",
+              "name": "tipo_documento",
+              "value": "={{ $('PUT Upload S3').item.json.mimeType }}",
+              "type": "string"
+            },
+            {
+              "id": "8fb136eb-a806-4b4c-bea9-6ec378cf735f",
+              "name": "file_id",
+              "value": "={{ $('PUT Upload S3').item.json.file_id }}",
+              "type": "string"
+            },
+            {
+              "id": "896cc539-a66c-4eaa-bc5e-f48d21d4933e",
+              "name": "file_name",
+              "value": "={{ $('PUT Upload S3').item.json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "5f6558f9-cd45-4ace-8ecc-fa2d51d716d0",
+              "name": "task_id",
+              "value": "={{ $('Criar Task Transcrição').item.json.task_id }}",
+              "type": "string"
+            },
+            {
+              "id": "97bd5d75-4e49-4743-b207-cb0476cdbe54",
+              "name": "task_url",
+              "value": "={{ $('Criar Task Transcrição').item.json.task_url }}",
+              "type": "string"
+            },
+            {
+              "id": "d0393c60-cef0-470e-ac55-2f4920308f27",
+              "name": "creditos_usados",
+              "value": "={{ $json.credit_usage || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "c6e83e82-6ed8-4cd1-8edf-817fb01b1edd",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Download Document": {
+      "main": [
+        [
+          {
+            "node": "Doc → Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doc → Base64": {
+      "main": [
+        [
+          {
+            "node": "HTTP Upload Manus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Upload Manus": {
+      "main": [
+        [
+          {
+            "node": "PUT Upload S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PUT Upload S3": {
+      "main": [
+        [
+          {
+            "node": "Criar Task Transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Task Transcrição": {
+      "main": [
+        [
+          {
+            "node": "Wait Inicial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Inicial": {
+      "main": [
+        [
+          {
+            "node": "GET Status Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Status Task": {
+      "main": [
+        [
+          {
+            "node": "Task Completou?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task Completou?": {
+      "main": [
+        [
+          {
+            "node": "Set Extrair Transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Retry": {
+      "main": [
+        [
+          {
+            "node": "GET Status Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "ginkgo-brann",
+    "templateCredsSetupCompleted": true
+  }
+}
