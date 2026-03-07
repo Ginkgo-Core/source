@@ -1,0 +1,398 @@
+{
+  "name": "Brann Doc Nodes v32 - Substituição",
+  "nodes": [
+    {
+      "id": "bcb96f29-aaae-4524-9d84-43c0ab52ee3a",
+      "name": "Download Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        1312
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "responseFormat": "file",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "file"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "689a969a-ae49-4c45-b9d5-a99de5ee82ad",
+      "name": "Doc → Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        1312
+      ],
+      "parameters": {
+        "jsCode": "// Detecta a chave binária correta e extrai base64 + metadados reais\nconst item = items[0];\nconst binaryKeys = Object.keys(item.binary || {});\nif (!binaryKeys.length) throw new Error('Nenhum arquivo binário encontrado');\n\nconst binaryKey = binaryKeys[0];\nconst binaryData = item.binary[binaryKey];\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binaryKey);\nconst base64 = buffer.toString('base64');\n\n// Detecta mimeType real a partir da assinatura do arquivo (magic bytes)\nlet detectedMime = binaryData.mimeType || 'application/octet-stream';\nconst magic = buffer.slice(0, 4).toString('hex');\nif (magic.startsWith('25504446')) detectedMime = 'application/pdf';\nelse if (magic.startsWith('504b0304')) detectedMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';\nelse if (magic.startsWith('d0cf11e0')) detectedMime = 'application/msword';\nelse if (magic.startsWith('ffd8ff'))   detectedMime = 'image/jpeg';\nelse if (magic.startsWith('89504e47')) detectedMime = 'image/png';\n\n// Detecta extensão do arquivo\nconst rawName = binaryData.fileName || item.json.fileName || 'documento';\nconst hasExt = rawName.includes('.');\nconst fileName = hasExt ? rawName : rawName + '.pdf';\n\nreturn [{\n  json: {\n    ...item.json,\n    fileBase64: base64,\n    fileName: fileName,\n    mimeType: detectedMime,\n    fileSize: buffer.length,\n    started_at: Date.now(),\n    polling_count: 0\n  }\n}];"
+      }
+    },
+    {
+      "id": "75732632-81f4-45ab-9e4b-261d6f1b8d4f",
+      "name": "Criar Task Transcrição",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        1312
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.manus.ai/v1/tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"prompt\": \"Analise e transcreva completamente o conteúdo deste documento. Extraia todo o texto, tabelas, listas e informações relevantes. Retorne o conteúdo completo de forma organizada e estruturada em português.\",\n  \"agentProfile\": \"manus-1.6-lite\",\n  \"taskMode\": \"chat\",\n  \"hideInTaskList\": true,\n  \"attachments\": [\n    {\n      \"type\": \"base64\",\n      \"data\": \"{{ $json.fileBase64 }}\",\n      \"media_type\": \"{{ $json.mimeType }}\",\n      \"filename\": \"{{ $json.fileName }}\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "bEBj72wrDwAOpbL7",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "d65409a7-17aa-4398-ae59-4cac6cc13525",
+      "name": "Wait Processamento",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        1312
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "value": 25
+      },
+      "webhookId": "dae485ef-79ec-43c2-885a-080134aafad9"
+    },
+    {
+      "id": "e3a2618d-61d1-4bba-af59-2137fe3f529d",
+      "name": "GET Status Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1248,
+        1312
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.manus.ai/v1/tasks/{{ $('Criar Task Transcrição').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "bEBj72wrDwAOpbL7",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "0f5c5865-81f2-4cf5-a38b-eac29e114532",
+      "name": "Verificar Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        1312
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const DONE   = ['completed', 'succeeded', 'done', 'finished'];\nconst ERRORS = ['failed', 'error', 'cancelled', 'canceled'];\nconst MAX_POLLS = 20;\n\nconst status       = ($json.status || '').toLowerCase();\nconst pollingCount = ($('Doc → Base64').item.json.polling_count || 0) + 1;\nconst startedAt    = $('Doc → Base64').item.json.started_at || Date.now();\nconst elapsedMs    = Date.now() - startedAt;\n\nconsole.log(`Poll #${pollingCount} | Status: \"${status}\" | Elapsed: ${Math.round(elapsedMs/1000)}s`);\n\nif (pollingCount > MAX_POLLS || elapsedMs > 300000) {\n  return [{ json: { ...$json, routing: 'timeout', polling_count: pollingCount,\n    elapsed_seconds: Math.round(elapsedMs/1000),\n    error_message: `Timeout após ${pollingCount} tentativas (${Math.round(elapsedMs/1000)}s)` }}];\n}\nif (DONE.includes(status)) {\n  return [{ json: { ...$json, routing: 'done', polling_count: pollingCount,\n    elapsed_seconds: Math.round(elapsedMs/1000) }}];\n}\nif (ERRORS.includes(status)) {\n  return [{ json: { ...$json, routing: 'timeout', polling_count: pollingCount,\n    error_message: `Task falhou com status: ${status}` }}];\n}\nreturn [{ json: { ...$json, routing: 'wait', polling_count: pollingCount,\n  elapsed_seconds: Math.round(elapsedMs/1000) }}];"
+      }
+    },
+    {
+      "id": "65b750be-2de5-45a6-93ba-c08d82ea3f06",
+      "name": "Rotear Resultado",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1312
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "85be7b31-4cc4-4e5a-9491-a99c2d75c2c8",
+              "leftValue": "={{ $json.routing }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a0993552-741a-4afc-b7ed-5720887bfe6b",
+      "name": "Wait Retry",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        1472
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "value": 15
+      },
+      "webhookId": "ee41c121-f776-4891-b4fc-de61316d3285"
+    },
+    {
+      "id": "0a3b736a-70fc-4fe1-9d11-2ccf43683aca",
+      "name": "Set Extrair Transcrição",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        1152
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "71612127-6ed6-4e9f-b45a-82b9a5f9b13e",
+              "name": "numero_lead",
+              "value": "={{ $('Doc → Base64').item.json.NUMERO_LEAD || $('Doc → Base64').item.json.numero_lead }}",
+              "type": "string"
+            },
+            {
+              "id": "13cbb098-289b-4897-99a1-db901cbe1bb6",
+              "name": "texto_transcrito",
+              "value": "={{ \n(() => {\n  const out = $json.output || [];\n  // Formato 1: output[].content[].text (role=assistant, type=output_text)\n  const f1 = out\n    .filter(m => m.role === 'assistant')\n    .flatMap(m => Array.isArray(m.content) ? m.content : [])\n    .filter(c => c.type === 'output_text')\n    .map(c => c.text || '')\n    .join('\\n\\n')\n    .trim();\n  if (f1) return f1;\n  // Formato 2: content como string direta\n  const f2 = out\n    .filter(m => m.role === 'assistant')\n    .map(m => typeof m.content === 'string' ? m.content : '')\n    .join('\\n\\n')\n    .trim();\n  if (f2) return f2;\n  // Formato 3: campos diretos\n  return $json.result || $json.content || $json.text || '[sem transcrição]';\n})()\n}}",
+              "type": "string"
+            },
+            {
+              "id": "4f20c31b-7ebb-4704-bed1-09ba53cfd7e9",
+              "name": "tipo_documento",
+              "value": "={{ $('Doc → Base64').item.json.mimeType }}",
+              "type": "string"
+            },
+            {
+              "id": "26959fbd-0bd6-4df8-9892-5286920ebfc7",
+              "name": "file_name",
+              "value": "={{ $('Doc → Base64').item.json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "e9bcac8b-74e6-43c3-9e1a-481f63a720a4",
+              "name": "task_id",
+              "value": "={{ $('Criar Task Transcrição').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "c8d4efc6-c5f6-4503-9d7e-3fc98cf2b898",
+              "name": "polling_count",
+              "value": "={{ $json.polling_count }}",
+              "type": "number"
+            },
+            {
+              "id": "284c2875-1b9c-4ad3-9ba5-05e8791c10ed",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "acb8911b-9d80-4ea2-8868-696f3cb23187",
+      "name": "Set Erro Timeout",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        1632
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4a6d1361-a154-4368-b631-27704d776009",
+              "name": "numero_lead",
+              "value": "={{ $('Doc → Base64').item.json.NUMERO_LEAD || $('Doc → Base64').item.json.numero_lead }}",
+              "type": "string"
+            },
+            {
+              "id": "c52ccbba-625f-4763-aa55-1a6fa7ff216d",
+              "name": "texto_transcrito",
+              "value": "=[ERRO] Não foi possível transcrever o documento. {{ $json.error_message || 'Timeout' }}",
+              "type": "string"
+            },
+            {
+              "id": "c36085f5-004e-4500-9ca2-58b8796c4183",
+              "name": "file_name",
+              "value": "={{ $('Doc → Base64').item.json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "ae410d1f-926d-4acf-b0e4-9d2d7a93e4bb",
+              "name": "error_message",
+              "value": "={{ $json.error_message }}",
+              "type": "string"
+            },
+            {
+              "id": "ef90bded-1511-4239-8499-7b4f5c0882a0",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Download Document": {
+      "main": [
+        [
+          {
+            "node": "Doc → Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doc → Base64": {
+      "main": [
+        [
+          {
+            "node": "Criar Task Transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Task Transcrição": {
+      "main": [
+        [
+          {
+            "node": "Wait Processamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Processamento": {
+      "main": [
+        [
+          {
+            "node": "GET Status Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Status Task": {
+      "main": [
+        [
+          {
+            "node": "Verificar Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Status": {
+      "main": [
+        [
+          {
+            "node": "Rotear Resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rotear Resultado": {
+      "main": [
+        [
+          {
+            "node": "Set Extrair Transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Retry": {
+      "main": [
+        [
+          {
+            "node": "GET Status Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "f7f039fbb73f2502279c9176f75c5092ce304d6a8ac6cde298982ae7b55f5e97",
+    "templateCredsSetupCompleted": true
+  }
+}
