@@ -295,196 +295,760 @@ Estrutura que habilita o assistente unificado OpenClaw.
 
 ## 6. Guia de Setup e Deploy (Auto-Validado)
 
-Este guia descreve o processo para configurar o ambiente de desenvolvimento local e realizar o deploy para produção. O processo incorpora validações automáticas para garantir a integridade e a qualidade do código.
+### 6.1 Pré-requisitos
 
-### Pré-requisitos
+```bash
+# Verificar instalações
+docker --version          # >= 24
+docker compose version    # >= 2.20
+node --version            # >= 20
+pnpm --version            # >= 9
+supabase --version        # >= 1.150
+```
 
--   **Docker e Docker Compose:** Para orquestração dos serviços em contêineres.
--   **Node.js e pnpm:** Para gerenciamento do monorepo TypeScript.
--   **Supabase CLI:** Para gerenciamento das migrações do banco de dados.
--   **Vercel CLI e Railway CLI:** Para deploy dos respectivos ambientes.
-
-### Setup do Ambiente de Desenvolvimento Local
-
-1.  **Clonar o Repositório:**
-    ```bash
-    git clone <URL_DO_REPO_GINKGO_LEAF>
-    cd ginkgo-leaf
-    ```
-
-2.  **Instalar Dependências:**
-    ```bash
-    pnpm install
-    ```
-
-3.  **Configurar Variáveis de Ambiente:**
-    -   Copie o arquivo `.env.example` para `.env` na raiz do projeto.
-    -   Preencha as variáveis, incluindo as chaves da API do Supabase, Stripe e OpenAI.
-
-4.  **Iniciar o Banco de Dados e Serviços:**
-    -   Execute as migrações do Supabase para criar o schema localmente:
-        ```bash
-        supabase start
-        supabase db reset
-        ```
-    -   Inicie todos os serviços de infraestrutura (n8n, Evolution API, Chatwoot, Redis) com Docker Compose:
-        ```bash
-        docker-compose -f infra/docker/docker-compose.yml up -d
-        ```
-
-5.  **Iniciar as Aplicações:**
-    -   Inicie o frontend, a API e os workers em modo de desenvolvimento:
-        ```bash
-        pnpm dev
-        ```
-
-### Processo de Deploy e CI/CD (Auto-Validado)
-
-O deploy é automatizado através de um pipeline de CI/CD (ex: GitHub Actions) que executa uma série de validações antes de publicar as novas versões.
-
-**Pipeline de Validação:**
-
-1.  **Lint e Type Checking:** Garante que o código segue os padrões de estilo e que não há erros de tipo.
-    ```bash
-    pnpm lint
-    pnpm typecheck
-    ```
-
-2.  **Validação de Skills (se aplicável):** Se uma nova skill foi adicionada ou modificada, o script `quick_validate.py` é executado para garantir que o `SKILL.md` está bem formatado.
-    ```bash
-    python3 scripts/validation/quick_validate.py packages/skills/<nome-da-skill>
-    ```
-
-3.  **Testes Unitários e de Integração:** Executa os testes para garantir que as novas mudanças não quebraram a funcionalidade existente.
-
-4.  **Build das Aplicações:** Gera os artefatos de produção para cada aplicação no monorepo.
-    ```bash
-    pnpm build
-    ```
-
-**Deploy:**
-
-1.  **Frontend (`apps/web`):** O deploy para a Vercel é acionado automaticamente por um push para a branch `main`.
-
-2.  **Backend (`apps/api`, `apps/workers`):**
-    -   Uma imagem Docker de produção é construída.
-    -   A nova imagem é enviada para um registro (ex: Docker Hub, GitHub Container Registry).
-    -   O deploy na Railway (ou VPS) é atualizado para usar a nova imagem.
-
-3.  **Migrações do Banco de Dados:** As migrações do Supabase são aplicadas ao banco de dados de produção de forma segura.
-    ```bash
-    supabase db push
-    ```
-
-> O script `onboard-docker.sh` serve como um exemplo de teste end-to-end, simulando o fluxo de onboarding em um ambiente Docker isolado, o que é uma excelente prática para validar a experiência do usuário final antes do deploy.
+Contas necessárias antes de começar:
+- Supabase (cloud) — criar projeto antes do primeiro deploy
+- Stripe — criar conta e produtos antes de rodar seed
+- OpenAI — chave de API disponível
+- Cloudflare — domínio apontado para IP da VPS
 
 ---
 
+### 6.2 Setup Local (Desenvolvimento)
+
+**Passo 1 — Clonar e instalar**
+
+```bash
+git clone https://github.com/ginkgosystems/ginkgo-leaf
+cd ginkgo-leaf
+pnpm install
+```
+
+**Passo 2 — Variáveis de ambiente**
+
+```bash
+cp .env.example .env
+# Preencher obrigatórias P1 (ver ENV-VARIABLES-GUIDE.md)
+# Mínimo para rodar local:
+#   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+#   OPENAI_API_KEY
+#   REDIS_URL=redis://localhost:6379
+```
+
+**Passo 3 — Subir serviços locais (Docker)**
+
+```bash
+cd infra/docker
+docker compose up -d
+# Serviços: n8n, Evolution API, Chatwoot, Redis, Traefik
+```
+
+**Passo 4 — Banco de dados**
+
+```bash
+# Conectar ao projeto Supabase
+supabase login
+supabase link --project-ref <project-id>
+
+# Aplicar todas as migrations em ordem
+supabase db push
+
+# Executar seed do Tenant Zero
+psql $SUPABASE_DB_URL -f packages/db/seed/tenant_zero.sql
+```
+
+**Passo 5 — Gerar tipos TypeScript do banco**
+
+```bash
+# Gerar tipos a partir do schema do Supabase
+supabase gen types typescript --linked > packages/db/types/database.types.ts
+
+# Usar nos serviços:
+# import type { Database } from '@ginkgo/db/types/database.types'
+# const supabase = createClient<Database>(url, key)
+```
+
+**Passo 6 — Rodar aplicações**
+
+```bash
+# Rodar web + api simultaneamente
+pnpm dev
+
+# Ou individualmente:
+pnpm --filter web dev      # http://localhost:3000
+pnpm --filter api dev      # http://localhost:3001
+```
+
+**Validação do ambiente local:**
+
+```bash
+# API respondendo
+curl http://localhost:3001/health
+# Esperado: {"status":"ok","timestamp":"..."}
+
+# Banco conectado
+curl http://localhost:3001/health/db
+# Esperado: {"status":"ok","tables":38}
+
+# n8n acessível
+open http://localhost:5678
+
+# Redis conectado
+docker compose exec redis redis-cli ping
+# Esperado: PONG
+```
+
+---
+
+### 6.3 Setup de Produção (VPS + Vercel + Railway)
+
+**Topologia de produção:**
+
+```
+Cloudflare DNS
+  ├── app.ginkgosystems.tech    → Vercel (apps/web)
+  ├── api.ginkgosystems.tech    → Railway (apps/api)
+  ├── n8n.ginkgosystems.tech    → VPS Docker
+  ├── evolution.ginkgosystems.tech → VPS Docker
+  └── chatwoot.ginkgosystems.tech  → VPS Docker
+
+Supabase Cloud  → banco, auth, storage, pgvector
+Redis           → Railway Managed ou Upstash
+Stripe          → billing (externo)
+```
+
+**Deploy VPS (Hostinger KVM 4 — mín. 4GB RAM)**
+
+```bash
+# 1. Criar registros A no Cloudflare para todos os subdomínios
+# 2. Aguardar propagação DNS
+dig +short n8n.ginkgosystems.tech  # deve retornar IP da VPS
+
+# 3. Na VPS:
+git clone https://github.com/ginkgosystems/ginkgo-leaf
+cd ginkgo-leaf/infra/docker
+cp .env.example .env && nano .env
+
+# 4. Primeira execução: migrations Chatwoot
+docker compose run --rm chatwoot bundle exec rails db:chatwoot_prepare
+
+# 5. Deploy
+bash deploy.sh
+
+# 6. Validar
+curl -s -o /dev/null -w "%<{http_code}>" https://n8n.ginkgosystems.tech/healthz
+# Esperado: 200
+```
+
+**Deploy Frontend (Vercel)**
+
+```bash
+# Via CLI
+cd apps/web
+vercel deploy --prod
+
+# Ou via integração GitHub:
+# Vercel → Import Project → ginkgo-leaf → Root: apps/web
+# Build command: pnpm build
+# Output: .next
+```
+
+Variáveis no painel Vercel:
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+NEXT_PUBLIC_APP_URL
+SUPABASE_SERVICE_ROLE_KEY
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+```
+
+**Deploy Backend (Railway)**
+
+```bash
+# Via CLI
+cd apps/api
+railway up
+
+# Ou via GitHub:
+# Railway → New Project → Deploy from GitHub → Root: apps/api
+```
+
+---
+
+### 6.4 Pipeline de CI/CD
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+
+  migrate:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+      - run: supabase db push --linked
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  deploy-web:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-api:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx railway up --service api
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+```
+
+---
+
+### 6.5 Scripts de Manutenção
+
+```bash
+# Regenerar tipos TypeScript após migration
+pnpm db:types
+
+# Aplicar nova migration
+supabase db push
+
+# Rollback de prompt de agente
+bash infra/scripts/rollback-prompt.sh brann <tenant_slug> <version>
+
+# Provisionar novo cliente
+bash infra/scripts/provision-tenant.sh \
+  "Nome do Cliente" business "+5511999999999" "+5511888888888"
+
+# Indexar documento na base RAG
+bash infra/scripts/ingest-doc.sh \
+  <tenant_id> "FAQ do Cliente" text "$(cat faq.md)"
+
+# Testar qualidade do RAG
+bash infra/scripts/rag-quality-test.sh <tenant_id>
+
+# Backup manual do banco
+supabase db dump --linked -f backup-$(date +%Y%m%d).sql
+```
+
+---
+
+### 6.6 Checklist Auto-Validado — Go-Live
+
+Execute e marque cada item antes de liberar cliente externo:
+
+```
+INFRAESTRUTURA
+[ ] DNS propagado para todos os subdomínios
+[ ] SSL ativo em todos os subdomínios (padlock no browser)
+[ ] docker compose ps — todos os containers healthy/running
+[ ] curl https://n8n.ginkgosystems.tech/healthz → 200
+
+BANCO
+[ ] supabase/check-schema.sql retorna 38+ tabelas
+[ ] Tenant Zero inserido e validado
+[ ] RLS: query com tenant falso retorna 0 rows
+[ ] Índice HNSW em knowledge_chunks criado
+
+AGENTE BRANN
+[ ] Mensagem no WhatsApp → resposta em < 5s
+[ ] tool_executions logado após cada execução
+[ ] Lead criado após qualificação mínima
+[ ] Handoff chegando no Chatwoot com resumo
+[ ] Alerta de lead quente chegando ao operador
+
+RAG
+[ ] FAQ e catálogo indexados (20+ chunks)
+[ ] rag-quality-test.sh → 9+/10 perguntas passando
+[ ] retrieval_logs populado com scores > 0.70
+
+BILLING
+[ ] Stripe Checkout funcionando (modo test)
+[ ] Webhook stripe → subscriptions atualizado
+[ ] Token balance refletindo plano
+
+OBSERVABILIDADE
+[ ] Daily summary chegando às 08h BRT
+[ ] Incident handler testado (falha gera alerta)
+[ ] Metabase ou Supabase Studio mostrando métricas
+
+TENANT ZERO
+[ ] 48h de operação estável sem intervenção manual
+[ ] Zero incidentes severity=high sem resolução
+```
+
+---
 
 ## 7. Agentes e Skills
 
-O coração da plataforma Ginkgo é seu ecossistema de agentes de IA, cada um com uma especialidade e um conjunto de skills que podem ser expandidas. A arquitetura é projetada para ser modular, permitindo que novos agentes e skills sejam adicionados como add-ons.
+### 7.1 Arquitetura do Agent Runtime
 
-### Agentes Principais
+Todo agente executa dentro do mesmo ciclo padronizado, independente do canal ou da complexidade da tarefa:
 
-| Agente | Nome de Código | Responsabilidade | Canal Principal |
-| :--- | :--- | :--- | :--- |
-| **Atendimento** | Brann | Atendimento ao cliente, qualificação de leads e vendas consultivas. | WhatsApp |
-| **Gestão** | Alfred | Execução de tarefas operacionais e análise de dados. | n/a (interno) |
-| **Conteúdo** | Nyra | Criação e agendamento de conteúdo para redes sociais. | n/a (interno) |
-| **Comando** | OpenClaw | Assistente unificado para operadores, orquestrando outros agentes e ferramentas. | Telegram, Webchat |
+```
+Input (webhook / API / cron)
+  → Context Builder
+      ↓ histórico + metadata do contato
+  → RAG Retrieval
+      ↓ top-k chunks relevantes
+  → Prompt Builder
+      ↓ system + contexto + RAG + tool specs
+  → LLM Call (OpenAI gpt-4o)
+      ↓ resposta ou tool_call
+  → Tool Dispatcher
+      ↓ executar tool se necessário
+  → Tool Executor + Log
+      ↓ resultado reinjetado ou resposta final
+  → Response Formatter
+      ↓ sanitizar por canal (WhatsApp ≠ Telegram)
+  → Output (Evolution / OpenClaw / API)
+  → Metering (debitar tokens)
+  → Observability Log
+```
 
-### Estrutura de uma Skill
-
-Uma `Skill` é um pacote auto-contido que estende as capacidades de um agente. A estrutura de uma skill é padronizada para garantir a consistência e a facilidade de manutenção.
-
--   **`SKILL.md`:** O arquivo principal que define os metadados da skill (nome, descrição) e fornece as instruções em linguagem natural para o agente sobre como e quando usar a skill.
--   **`scripts/` (opcional):** Contém scripts executáveis (Python, Bash) que realizam as ações da skill. Por exemplo, um script para se conectar a uma API externa.
--   **`references/` (opcional):** Documentação de apoio para o agente, como especificações de API ou guias de processo.
--   **`assets/` (opcional):** Arquivos estáticos que a skill pode usar, como templates de e-mail ou imagens.
-
-Os scripts `init_skill.py`, `quick_validate.py` e `package_skill.py` são ferramentas essenciais para o ciclo de vida de uma skill, automatizando a criação, validação e empacotamento.
-
-### Exemplo de Skill: `RAG Base`
-
--   **`SKILL.md`:** Descreve como o agente deve usar a função `search_knowledge` para responder a perguntas com base nos documentos indexados do tenant.
--   **`scripts/search_knowledge.py`:** Um script Python que se conecta ao `pgvector` no Supabase, realiza a busca por similaridade de cosseno e retorna os chunks de texto mais relevantes.
-
-### Frontend de Gerenciamento de Skills
-
-O dashboard web (`apps/web`) possui uma seção dedicada ao gerenciamento de skills, permitindo que os administradores do tenant:
-
--   **Visualizem** todas as skills disponíveis e instaladas.
--   **Habilitem ou desabilitem** skills com um clique.
--   **Instalem** novas skills a partir de um repositório (ClawHub).
--   **Configurem** chaves de API necessárias para skills que se conectam a serviços externos.
-
-O código-fonte para esta interface está localizado em `apps/web/components/skills/`, com os arquivos `skills.ts`, `skills-shared.ts` e `skills-grouping.ts` definindo a lógica de renderização e interação.
+**Garantias do runtime:**
+- Toda tool call registra em `tool_executions` — sem exceção
+- Prompt sempre carregado de `prompt_versions` — nunca hardcoded
+- Tokens debitados de `token_balances` após cada execução
+- Erro em qualquer nó dispara `incident_handler`
 
 ---
 
+### 7.2 Brann — Atendimento Comercial
+
+| Parâmetro | Valor |
+|-----------|-------|
+| Canal | WhatsApp via Evolution API |
+| Orquestração | n8n (WA-Brann-Atendimento.json) |
+| Modelo | gpt-4o · temperature 0.4 · max_tokens 800 |
+| Contexto | Últimas 12 mensagens |
+| RAG top-k | 5 chunks · threshold 0.70 |
+| Add-on | +R$147/mês |
+
+**Metodologia de vendas embutida no prompt (SPIN):**
+
+```
+1. Situação   → entender o negócio do lead
+2. Problema   → identificar o que está travando
+3. Implicação → mostrar o custo do problema
+4. Necessidade → conectar à solução da Ginkgo
+```
+
+**Tools do Brann:**
+
+| Tool | Trigger | Efeito |
+|------|---------|--------|
+| `search_knowledge` | Antes de responder sobre produto | Busca RAG + injeta contexto |
+| `create_lead` | Nome + telefone + intenção confirmados | UPSERT contacts + lead_scores |
+| `fetch_catalog` | Pergunta sobre planos/preços | SELECT chunks tag:catalog |
+| `handoff_human` | Urgência / pedido / 2 falhas | Ticket Chatwoot + alerta |
+| `schedule_appointment` | Lead aceita agendar | INSERT appointments |
+
+**Lead Score Engine (paralelo ao atendimento):**
+
+```
+Trigger: após cada mensagem do agente
+
+Pontuação:
+  +20  forneceu nome próprio
+  +20  forneceu telefone ou email
+  +15  mencionou problema ou dificuldade
+  +15  perguntou sobre preço ou plano
+  +20  mencionou urgência ou prazo
+  +10  3+ mensagens consecutivas
+  -10  pediu para parar ou demonstrou desinteresse
+  -15  última mensagem > 24h atrás
+
+Ações por tier:
+  hot  (≥70) → alerta operador + tag hot_lead + CTA demo
+  warm (40–69) → tag warm_lead
+  cold (<40)  → tag cold_lead
+```
+
+---
+
+### 7.3 Alfred — Operações e Análise
+
+| Parâmetro | Valor |
+|-----------|-------|
+| Canal | Dashboard / API interna |
+| Orquestração | n8n (Alfred-Report-Daily.json) |
+| Modelo | gpt-4o · temperature 0.2 |
+| Regra crítica | READ-ONLY por padrão |
+| Add-on | +R$147/mês |
+
+**Capacidades:**
+- SQL Agent read-only sobre banco do cliente
+- Geração de relatórios operacionais e executivos
+- Parsing e extração de campos de PDFs e planilhas
+- Monitoramento de métricas e filas
+- Integração com ClickUp (tasks e projetos)
+
+**Política de segurança:**
+```
+can_read   = true
+can_write  = requires_explicit_confirmation
+destructive = never
+
+Toda escrita exige:
+  1. Confirmação explícita do operador
+  2. Log em audit_logs com actor e payload
+  3. Possibilidade de rollback documentada
+```
+
+---
+
+### 7.4 Nyra — Conteúdo e Tráfego Pago
+
+| Parâmetro | Valor |
+|-----------|-------|
+| Canal | Dashboard / n8n pipelines |
+| Orquestração | n8n (Nyra-Reels-Pipeline.json + outros) |
+| Modelo | gpt-4o · temperature 0.7 |
+| Add-on | +R$197/mês |
+
+**Pipeline de Reels:**
+
+```
+INPUT: tema / produto / objetivo / referências
+  ↓
+PESQUISA
+  TikTok API → trending sounds + hashtags
+  Meta Graph API → performance de posts anteriores
+  ↓
+BRIEFING (gpt-4o)
+  Hook (0–3s) · Desenvolvimento (3–25s) · CTA (25–30s)
+  Legenda com hashtags por plataforma
+  2 variações A/B de hook
+  ↓
+GERAÇÃO DE ATIVOS
+  ElevenLabs  → narração em voz IA
+  HeyGen      → avatar IA em vídeo
+  Gamma AI    → slides de apoio
+  Blotato     → social cards + thumbnails
+  ↓
+APROVAÇÃO (dashboard)
+  [Aprovar] [Editar] [Regenerar]
+  ↓
+PUBLICAÇÃO (via Blotato)
+  Instagram Reels · TikTok · YouTube Shorts
+  Facebook Reels · Threads · LinkedIn · X
+  ↓
+ANÁLISE (D+1)
+  Métricas via APIs → dashboard Content
+```
+
+**Reciclagem de conteúdo longo:**
+
+```
+Conteúdo longo (post, artigo, palestra)
+  → extração de insights (gpt-4o)
+    → roteiros por formato
+      → carrossel
+      → vídeos curtos
+        → stories
+          → email marketing
+```
+
+---
+
+### 7.5 Command — Assistente Unificado
+
+| Parâmetro | Valor |
+|-----------|-------|
+| Canal | Telegram + Webchat |
+| Runtime | OpenClaw (1 instância por tenant) |
+| Modelo | gpt-4o · temperature 0.4 |
+| Add-on | +R$197/mês (plano Scale) |
+
+**Capacidades:**
+- Acesso unificado a todos os agentes do tenant
+- LAPLACE routing — delega subtarefas ao agente correto
+- Consulta à biblioteca RAG completa do tenant
+- Ações com aprovação humana (publish, delete, send)
+- Auditoria completa de toda ação executada
+
+**Exemplos de comandos via Telegram:**
+
+```
+"Quantos leads quentes hoje?"
+  → Alfred consulta lead_scores
+
+"Cria um Reel sobre o produto X"
+  → Nyra inicia pipeline de Reels
+
+"Como está a taxa de handoff esta semana?"
+  → Alfred consulta vw_handoff_rate
+
+"Pausa a campanha do Instagram"
+  → Nyra chama Meta Ads API (com aprovação)
+
+"Adiciona esse PDF na base do Brann"
+  → worker-ingestion via ingest-doc.sh
+```
+
+---
+
+### 7.6 Skills — SDK e Marketplace
+
+**Estrutura de uma skill:**
+
+```
+skill-package/
+  manifest.json     → id, version, author, permissions, billing
+  prompts/          → instruções adicionais por agente
+  tools/            → implementações TypeScript
+  workflows/        → n8n workflows exportados
+  ui/               → extensões React para o dashboard
+  docs/             → README e setup guide
+```
+
+**Manifest mínimo:**
+
+```json
+{
+  "id": "shopify-analytics",
+  "name": "Shopify Analytics",
+  "version": "1.0.0",
+  "author": "dev@empresa.com",
+  "category": "ecommerce",
+  "agents": ["alfred", "command"],
+  "requires": {
+    "integrations": ["shopify"],
+    "plan": "business"
+  },
+  "permissions": ["orders.read", "reports.write"],
+  "billing": {
+    "model": "subscription",
+    "price_brl": 49,
+    "trial_days": 7
+  },
+  "revshare": {
+    "developer": 0.70,
+    "platform": 0.30
+  }
+}
+```
+
+**Skills oficiais disponíveis (P1/P2):**
+
+| Skill | Agente | Plano mínimo | Preço |
+|-------|--------|--------------|-------|
+| `leaf-core` | Brann | Starter | Incluso |
+| `alfred-sql` | Alfred | Business | Incluso |
+| `alfred-reports` | Alfred | Business | Incluso |
+| `nyra-reels` | Nyra | Business | Incluso |
+| `nyra-ads` | Nyra | Business | Incluso |
+| `command-core` | Command | Scale | Incluso |
+| `shopify-intelligence` | Alfred | Business | +R$49/mês |
+| `clickup-sync` | Alfred | Business | +R$29/mês |
+| `google-ads-manager` | Nyra | Business | +R$79/mês |
+| `meta-ads-manager` | Nyra | Business | +R$79/mês |
+| `prospeccao-ativa` | Brann | Scale | +R$97/mês |
+
+**Regras obrigatórias para skills:**
+
+```
+✅ Usar @ginkgo/skill-sdk — nunca acessar Supabase diretamente
+✅ Declarar todas as permissões no manifest
+✅ Respeitar ctx.tenantId em toda operação
+✅ Nunca acessar secrets sem ser via ctx.secrets
+✅ Requests apenas para domínios declarados no manifest
+
+❌ Queries sem WHERE tenant_id
+❌ Acesso direto ao Postgres
+❌ Bypass de policies do Tool Registry
+❌ Dados cross-tenant de qualquer forma
+```
+
+---
 
 ## 8. Plano de Execução (90 Dias)
 
-Este plano de 90 dias, dividido em sprints quinzenais, foca em construir a fundação da plataforma e entregar valor incrementalmente. O objetivo é ter um MVP funcional e com os primeiros clientes em produção ao final do período.
+### 8.1 Resumo por fase
 
-### Sprint 1-2 (Dias 1-30): Fundação e Core Multi-Tenant
+| Fase | Semanas | Objetivo | Entregável chave |
+|------|---------|----------|-----------------|
+| Fundação | 1–2 | Infra + banco + Brann operacional | WhatsApp respondendo + logs |
+| Produto | 3–4 | RAG + dashboard + 7 testes | Base respondendo corretamente |
+| Venda | 5–6 | Frontend + billing + 1º cliente | Checkout Stripe + go-live |
+| Tração | 7–9 | 3 clientes + otimização | Dashboard completo + prompts ajustados |
+| Escala | 10–13 | 5 clientes + onboarding automático | MRR > R$2.000 |
 
--   **Objetivo:** Estabelecer a infraestrutura básica, o modelo de dados e o core multi-tenant.
--   **Entregáveis:**
-    -   Repositório monorepo com `pnpm workspaces` configurado.
-    -   Schema SQL inicial em Supabase com tabelas de `tenants`, `profiles`, `memberships` e `subscriptions`.
-    -   Políticas de RLS implementadas para isolamento de tenants.
-    -   API Core (Fastify) com endpoints para criação de tenants e convite de membros.
-    -   Dashboard (Next.js) com fluxo de login, criação de conta e gerenciamento de equipe.
-    -   Integração com Stripe para criação de `customer` e `subscription`.
+### 8.2 Sprints e prompts para o Antigravity
 
-### Sprint 3-4 (Dias 31-60): Agente de Atendimento (Brann) e RAG
+| Sprint | Prompt | Entregável |
+|--------|--------|-----------|
+| S1 | P-01 | docker-compose + Traefik + SSL + healthchecks |
+| S1 | P-02 | Schema Supabase (9 lotes) + seed Tenant Zero |
+| S1 | P-03 | Evolution instance + n8n webhook receiver |
+| S2 | P-04 | Brann flow completo (webhook → OpenAI → Evolution) |
+| S2 | P-05 | Tools: create_lead + fetch_catalog + handoff_human |
+| S2 | P-06 | System prompt v1 no banco + sanitização WhatsApp |
+| S2 | P-07 | Lead Score Engine + alerta operador |
+| S2 | P-08 | Incident handler em todos os workflows |
+| S3 | P-10 | Pipeline RAG (extract → chunk → embed → pgvector) |
+| S3 | P-11 | Tool search_knowledge conectada ao Brann |
+| S3 | P-12 | Indexar FAQ + catálogo do Tenant Zero |
+| S4 | P-13 | 7 testes end-to-end (todos devem passar) |
+| S4 | P-14 | Dashboard métricas + daily summary |
+| S5 | FE-01 | Next.js + Supabase Auth + layout + middleware |
+| S5 | FE-03 | Billing + Stripe Checkout + webhooks |
+| S6 | P-15 | provision-tenant.sh + go-live 1º cliente |
+| S6 | FE-02 | Dashboard KPIs + feed ao vivo (Realtime) |
 
--   **Objetivo:** Lançar o primeiro agente gerador de valor e a base do sistema de memória.
--   **Entregáveis:**
-    -   Deploy self-hosted do n8n, Evolution API e Chatwoot via Docker Compose.
-    -   Workflow em n8n para o agente **Brann**, conectando-se ao WhatsApp via Evolution API.
-    -   Schema SQL para o `rag` e `leaf` (canais, contatos, conversas).
-    -   Worker de ingestão para upload de documentos, chunking e embedding com `pgvector`.
-    -   Skill `search_knowledge` para o Brann, permitindo que ele responda a perguntas com base no RAG.
-    -   Interface no dashboard para upload de documentos e visualização de conversas.
+**Protocolo de execução:**
 
-### Sprint 5-6 (Dias 61-90): Agente de Comando (OpenClaw) e Onboarding
+```
+1. Colar contexto permanente (ginkgo-permanent-context.md)
+2. Colar prompt do sprint atual
+3. Aguardar plano do agente
+4. Revisar antes de executar
+5. Validar checklist de aceite
+6. Só avançar após checklist passar
+```
 
--   **Objetivo:** Habilitar o controle da plataforma via linguagem natural e refinar a experiência de onboarding.
--   **Entregáveis:**
-    -   Schema SQL para o `command` (tool registry, policies, sessions).
-    -   Implementação do agente **OpenClaw** com as 8 ferramentas iniciais (MVP).
-    -   Integração do OpenClaw com o Telegram e um componente de chat no dashboard.
-    -   Dashboard de billing, mostrando o consumo de tokens e o status da assinatura.
-    -   Fluxo de onboarding guiado para novos clientes, ajudando-os a conectar suas contas e a obter valor rapidamente.
-    -   Lançamento para os primeiros clientes beta.
+### 8.3 Metas ao dia 90
+
+| Métrica | Meta |
+|---------|------|
+| MRR | ≥ R$2.000 |
+| Clientes ativos | ≥ 5 |
+| Churn | 0 |
+| Custo operacional mensal | < R$800 |
+| Margem bruta | > 70% |
+| Tempo de onboarding | < 5 dias |
+| Taxa de handoff | < 20% |
+| Custo por conversa | < R$0,50 |
+| Latência média | < 5s |
+
+### 8.4 Segmentos de aquisição prioritários
+
+| Segmento | Dor principal | Argumento de ROI |
+|----------|--------------|-----------------|
+| Imobiliárias | Lead perdido por resposta lenta | 1 lead convertido/semana paga o plano |
+| Clínicas | Agenda no WhatsApp manual | Reduz 60% das mensagens da recepcionista |
+| E-commerce local | Atendimento fora do horário | Pedido fora do horário vira receita |
+| Prestadores de serviço | Orçamento pedido e nunca respondido | Lead qualificado antes da visita |
+
+**Pitch de 60 segundos:**
+
+```
+"Você perde quantos leads por semana porque não respondeu rápido?
+
+O Brann da Ginkgo fica no seu WhatsApp 24h, responde na hora,
+qualifica o interesse e só chama você quando o cliente está pronto.
+
+Não é bot genérico — aprende com seu negócio, conhece seu catálogo
+e fala no seu tom.
+
+Configuramos em uma semana. R$97/mês base.
+Posso mostrar funcionando em 15 minutos?"
+```
 
 ---
-
 
 ## 9. Referências e Boas Práticas
 
-Esta seção consolida as referências externas e as boas práticas internas que guiam o desenvolvimento da plataforma Ginkgo.
+### 9.1 Documentação do projeto
 
-### Referências Externas (Gems)
+| Documento | Conteúdo | Localização no repo |
+|-----------|----------|-------------------|
+| `README.md` | Referência técnica oficial completa | Raiz |
+| `MIGRATIONS-GUIDE.md` | 9 lotes SQL + seed + RLS + check-schema | `packages/db/` |
+| `WORKFLOWS-GUIDE.md` | 8 workflows n8n nó por nó | `n8n/workflows/` |
+| `ENV-VARIABLES-GUIDE.md` | 50+ variáveis com docs e separação por serviço | Raiz |
+| `ginkgo-permanent-context.md` | Contexto permanente do Antigravity | `docs/prd/` |
+| `go-live-checklist.md` | Checklist binário por cliente | `docs/ops/` |
 
--   **[1] n8n Production Self-Hosting:** [github.com/AiratTop/n8n-self-hosted](https://github.com/AiratTop/n8n-self-hosted)
--   **[2] Evolution API (WhatsApp):** [github.com/EvolutionAPI/evolution-api](https://github.com/EvolutionAPI/evolution-api)
--   **[3] Chatwoot Self-Hosting:** [github.com/chatwoot/chatwoot](https://github.com/chatwoot/chatwoot)
--   **[4] Supabase Multi-Tenancy Boilerplate:** [github.com/vvalchev/supabase-multitenancy-rbac](https://github.com/vvalchev/supabase-multitenancy-rbac)
--   **[5] RAG Pipeline with TypeScript & pgvector:** [encore.dev/articles/how-to-build-rag-pipeline](https://encore.dev/articles/how-to-build-rag-pipeline)
--   **[6] Next.js + Fastify SaaS Boilerplate:** [github.com/rcrdk/nextjs-fastify-saas-rbac](https://github.com/rcrdk/nextjs-fastify-saas-rbac)
+### 9.2 Gems do GitHub recomendados
 
-### Boas Práticas Internas
+| Categoria | Repositório | Por que usar |
+|-----------|-------------|-------------|
+| n8n production setup | `AiratTop/n8n-self-hosted` | Docker Compose production-ready com HTTPS automático e backup |
+| Evolution API | `EvolutionAPI/evolution-api` | Referência oficial — webhooks, múltiplas instâncias, changelog |
+| Chatwoot | `chatwoot/chatwoot` | `docker-compose.production.yaml` canônico para self-hosted |
+| Boilerplate SaaS | `rcrdk/nextjs-fastify-saas-rbac` | Referência para estrutura de `apps/api` + `apps/web` com RBAC |
+| Multi-tenancy Supabase | `vvalchev/supabase-multitenancy-rbac` | Template de RLS e policies multi-tenant alinhado com nosso modelo |
 
--   **Tudo é Multi-Tenant:** Cada nova tabela, endpoint ou serviço deve ser projetado desde o início com o `tenant_id` em mente. A segurança via RLS não é opcional.
--   **SQL é a Fonte da Verdade:** O schema do banco de dados, gerenciado via migrações do Supabase, é a fonte canônica da verdade para a estrutura de dados. O Drizzle ORM e os tipos TypeScript são gerados a partir dele.
--   **Não Reinvente a Roda:** Utilize as "Gems" do GitHub e outras soluções open source sempre que possível. O valor da Ginkgo está na orquestração e na experiência do usuário, não na re-implementação de componentes básicos.
--   **Valide Sempre:** O pipeline de CI/CD deve ser rigoroso. Lint, testes, validação de skills e builds devem passar antes de qualquer deploy.
--   **Documentação como Código:** O `README.md` e este manual são tão importantes quanto o código. Mantenha-os atualizados a cada nova feature ou mudança de arquitetura.
+### 9.3 APIs e documentações externas
+
+| Serviço | URL |
+|---------|-----|
+| Supabase Docs | https://supabase.com/docs |
+| pgvector | https://github.com/pgvector/pgvector |
+| n8n Docs | https://docs.n8n.io |
+| Evolution API | https://doc.evolution-api.com |
+| OpenClaw | https://github.com/openclaw/maintainers |
+| Chatwoot API | https://www.chatwoot.com/docs/api |
+| Stripe Docs | https://stripe.com/docs |
+| OpenAI Platform | https://platform.openai.com/docs |
+| Perplexity API | https://docs.perplexity.ai |
+| ElevenLabs | https://elevenlabs.io/docs |
+| HeyGen | https://docs.heygen.com |
+| Blotato | https://blotato.com/docs |
+| Gamma AI | https://gamma.app |
+| Meta Graph API | https://developers.facebook.com/docs/graph-api |
+| TikTok for Developers | https://developers.tiktok.com/doc |
+| Google APIs Explorer | https://developers.google.com/apis-explorer |
+
+### 9.4 Regras de engenharia — nunca violar
+
+```
+1.  WHERE tenant_id = $tenant em toda query — sem exceção
+2.  Secrets nunca hardcoded — sempre variáveis de ambiente
+3.  Prompts só mudam via prompt_versions — nunca edição direta
+4.  tool_executions obrigatório em toda tool call
+5.  Nenhum cliente externo antes do Tenant Zero rodar 48h estável
+6.  Próximo sprint só após checklist do atual passar
+7.  Incidente severity=high investigado no mesmo dia
+8.  Alfred read-only por padrão — escrita exige confirmação
+9.  Marketplace não abre antes de 5 clientes estáveis
+10. LLM provider é fornecedor — nunca fundação da arquitetura
+```
+
+### 9.5 O que não construir antes da semana 9
+
+```
+❌ Alfred SQL Agent
+❌ Nyra pipelines (Reels, posts, ads)
+❌ Command / OpenClaw
+❌ Adaptive / Corrective RAG
+❌ Migração para Qdrant
+❌ Multi-canal pesado (email, webchat nativo)
+❌ Google Drive sync
+❌ Marketplace de skills
+❌ Wave, Pyre, LAPLACE routing
+❌ Modelos locais em produção
+```
 
 ---
 
-Este manual serve como um documento vivo. Ele deve ser atualizado continuamente à medida que a plataforma evolui, garantindo que a equipe de desenvolvimento tenha sempre uma fonte de verdade clara, técnica e acionável para construir o futuro da Ginkgo AI Systems.
+> **Próximo movimento:** Colar o contexto permanente + P-01 no Antigravity.  
+> O que não está neste documento não entra no build do P1.
+
+---
+
+*Ginkgo AI Systems — Manual Definitivo v1.0 completo — Março 2026*
