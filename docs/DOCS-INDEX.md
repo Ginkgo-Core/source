@@ -29,7 +29,8 @@ Este é o ponto de entrada central para toda a documentação técnica do ecossi
 |---|---|
 | [**API-ROUTES.md**](API-ROUTES.md) | O contrato completo da API principal (`apps/api`), com todas as rotas, schemas de request/response e códigos de erro. |
 | [**WORKER-QUEUE.md**](WORKER-QUEUE.md) | Arquitetura do sistema de filas e workers assíncronos (Redis + BullMQ), com exemplos de jobs e implementação. |
-| [**AGENT-KERNEL.md**](AGENT-KERNEL.md) | Esqueleto técnico do `packages/agents`, o kernel que governa a execução segura e monitorada de todas as tools. |
+| [**AGENT-KERNEL.md**](AGENT-KERNEL.md) | Kernel de governança de execução de agentes (`packages/agents`) — v1.5 Hardened Industrial. Inclui singleton Supabase, `execution_id`, idempotência e débito atômico de tokens. |
+| [**AGENT-SPEC.md**](AGENT-SPEC.md) | Contrato de declaração de agentes. Define como criar Brann, Alfred, Nyra e Command via `config.ts`, `prompt.ts` e `tools.ts` sem tocar no kernel. Inclui o `agent-runtime.ts` completo. |
 
 ---
 
