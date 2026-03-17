@@ -43,7 +43,16 @@ Este é o ponto de entrada central para toda a documentação técnica do ecossi
 
 ---
 
-## 5. Serviços e Integrações
+## 5. Produto e Estratégia
+
+| Documento | Descrição |
+|---|---|
+| [**prd/GINKGO-WORKSPACE-PRD.md**](prd/GINKGO-WORKSPACE-PRD.md) | PRD completo do Ginkgo Workspace. Visão de produto, 4 agentes, 5 áreas de interface, modelo de tokenização, assinaturas, skills e fases de execução. |
+| [**prd/PRD-ANALYSIS.md**](prd/PRD-ANALYSIS.md) | Análise estratégica e técnica do PRD. Benchmarking competitivo com dados de tráfego dos concorrentes (SimilarWeb) e mapeamento de gems open-source por funcionalidade (GitHub Gem Seeker). |
+
+---
+
+## 6. Serviços e Integrações
 
 | Documento | Descrição |
 |---|---|
