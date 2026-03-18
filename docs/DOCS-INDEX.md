@@ -23,6 +23,7 @@ Este é o ponto de entrada central para toda a documentação técnica do ecossi
 |---|---|
 | [**prd/GINKGO-WORKSPACE-PRD.md**](prd/GINKGO-WORKSPACE-PRD.md) | PRD completo do Ginkgo Workspace. Visão de produto, 4 agentes, 5 áreas de interface, modelo de tokenização, assinaturas, skills e fases de execução. |
 | [**prd/PRD-ANALYSIS.md**](prd/PRD-ANALYSIS.md) | Análise estratégica e técnica do PRD. Benchmarking competitivo (SimilarWeb) e mapeamento de gems open-source por funcionalidade (GitHub Gem Seeker). |
+| [**prd/MARKET-INTELLIGENCE.md**](prd/MARKET-INTELLIGENCE.md) | **NOVO** — Análise de mercado, dores, concorrência e blueprint ideal da plataforma. Mapeia os 4 mercados em convergência, as 6 dores latentes, a análise competitiva por categoria e as 5 lacunas críticas a preencher para escalar. |
 
 ---
 
