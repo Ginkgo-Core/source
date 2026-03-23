@@ -41,6 +41,9 @@
 | `docs/architecture/AGENT-SPEC.md` | Contrato de declaração de agentes. config.ts + prompt.ts + tools.ts sem tocar no kernel. |
 | `docs/architecture/TOOL-REGISTRY-v1.md` | Catálogo oficial de tools v1. Specs, permissões, billing impact, critérios de aprovação. |
 | `docs/architecture/MULTI-WORKSPACE-AUTH.md` | Especificação de autenticação multi-workspace. Cookie strategy, WorkspaceSwitcher, billing consolidado. |
+| `docs/architecture/OPENCLAW-CLAUDE-N8N-BOUNDARIES.md` | Fronteiras definitivas entre as 4 camadas: Ginkgo Core, OpenClaw, Claude Agent SDK e n8n. Regras de custo, código de integração e tabela de decisão. |
+| `docs/architecture/KNOWLEDGE-ARCHITECTURE.md` | **NOVO** — Arquitetura Laplace RAG. 6 tipos de asset (INDEX/MOC/CLAIM/METHOD/FAQ/CATALOG), Brain Score, retrieval hierárquico, SQL `laplace_search` e Knowledge Health Worker. |
+| `docs/architecture/ACTOR-SYSTEM.md` | **NOVO** — Sistema de Persona e Voz dos Agentes. Tabela `actor_profiles`, personas por segmento, geração de prompt com GPT-4o e integração ElevenLabs para respostas em áudio. |
 
 ---
 
@@ -122,6 +125,9 @@ README.md
                     ├── docs/architecture/AGENT-KERNEL.md
                     │     └── docs/architecture/AGENT-SPEC.md
                     ├── docs/architecture/OPENCLAW-ARCHITECTURE.md
+                    ├── docs/architecture/OPENCLAW-CLAUDE-N8N-BOUNDARIES.md
+                    ├── docs/architecture/KNOWLEDGE-ARCHITECTURE.md
+                    ├── docs/architecture/ACTOR-SYSTEM.md
                     └── docs/WORKER-QUEUE.md
                           └── docs/workers/VIDEO-PROCESSOR-INFRA.md
 
@@ -134,4 +140,4 @@ docs/prd/GINKGO-WORKSPACE-PRD.md
 
 ---
 
-*Ginkgo AI Systems — docs/INDEX.md v2.0.0 — Março 2026*
+*Ginkgo AI Systems — docs/INDEX.md v2.1.0 — Março 2026*
