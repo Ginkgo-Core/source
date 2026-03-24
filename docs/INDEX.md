@@ -107,6 +107,7 @@
 |-----------|-----------|
 | `docs/marketplace/SKILLS-COMPLIANCE.md` | Política LGPD para skills. Risco por categoria, retenção, modal de aceite, jobs de limpeza. |
 | `docs/marketplace/MARKETPLACE-REVENUE.md` | Modelo de receita. Revshare 70/30, Stripe Connect Express, projeções por fase. |
+| `docs/marketplace/SKILL-OPERATIONAL-ACTIONS.md` | **NOVO** — Skill genérica de ações operacionais. 7 tools invariantes + config.json por nicho. Clínica, pizzaria, restaurante, suporte. O template é o produto. |
 
 ---
 
@@ -140,4 +141,4 @@ docs/prd/GINKGO-WORKSPACE-PRD.md
 
 ---
 
-*Ginkgo AI Systems — docs/INDEX.md v2.1.0 — Março 2026*
+*Ginkgo AI Systems — docs/INDEX.md v2.2.0 — Março 2026*
