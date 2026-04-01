@@ -1,0 +1,27 @@
+{
+  "name": "ginkgo-leaf",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ginkgo Leaf — Multi-tenant AI agent platform for Brazilian SMBs",
+  "author": "Ginkgo AI Systems <gabriel@ginkgosystems.tech>",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@9.1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "clean": "turbo clean",
+    "dev:api": "pnpm --filter @ginkgo/api dev",
+    "dev:web": "pnpm --filter @ginkgo/web dev",
+    "build:agents": "pnpm --filter @ginkgo/agents build",
+    "build:api": "pnpm --filter @ginkgo/api build",
+    "build:web": "pnpm --filter @ginkgo/web build"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5.4"
+  }
+}

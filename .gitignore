@@ -137,3 +137,18 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Turbo
+.turbo
+
+# Supabase
+supabase/.temp
+
+# Vercel
+.vercel
+
+# Local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
