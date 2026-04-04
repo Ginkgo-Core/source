@@ -24,6 +24,7 @@
 
 | Documento | Descrição |
 |-----------|-----------|
+| `docs/prd/GINKGO-AGENT-OS-PRD.md` | **NOVO** — PRD Técnico do Ginkgo Agent OS. Runtime unificado, memória hierárquica, barramento de ferramentas, políticas de governança e auditoria. |
 | `docs/prd/GINKGO-WORKSPACE-PRD.md` | PRD completo do Ginkgo Workspace. 4 agentes, 5 áreas de interface, tokenização, skills, fases. |
 | `docs/prd/MARKET-REPORT.md` | Relatório de mercado completo. Panorama, dores, concorrência, gaps e blueprint ideal. |
 | `docs/prd/GITHUB-GEMS.md` | Mapeamento de ferramentas open-source por categoria. Stack recomendado e prioridades P1/P2/P3. |
@@ -141,4 +142,4 @@ docs/prd/GINKGO-WORKSPACE-PRD.md
 
 ---
 
-*Ginkgo AI Systems — docs/INDEX.md v2.2.0 — Março 2026*
+*Ginkgo AI Systems — docs/INDEX.md v2.3.0 — Abril 2026*
