@@ -12,7 +12,10 @@
 | Documento | Descrição |
 |-----------|-----------|
 | `README.md` | Referência técnica oficial do repositório. Stack, arquitetura, agentes, integrações, modelo de dados e roadmap. **Comece aqui.** |
-| `docs/GINKGO-SOURCE-MANUAL.md` | **NOVO** — Manual Técnico Operacional do Ginkgo Source. Visão, arquitetura, agentes, produtos, jornada do cliente, governança e roadmap. |
+| `docs/GINKGO-SOURCE-MANUAL.md` | **ATUALIZADO** — Manual Técnico Operacional do Ginkgo Source (v1.1.0). Visão, arquitetura, agentes, produtos, jornada do cliente, governança e roadmap. |
+| `docs/ROUTING-POLICY.md` | **NOVO** — Especificação de Roteamento e Políticas do Agentic Router. |
+| `docs/AGENT-CONTRACTS.md` | **NOVO** — Contratos Tipados para Agentes Especialistas. |
+| `docs/STATE-MACHINE-AUDIT.md` | **NOVO** — Máquina de Estados e Especificação de Auditoria para Jobs. |
 | `docs/MANUAL_SAAS_1.md` | Manual definitivo em 9 seções. Visão completa de produto, stack, deploy e boas práticas. |
 | `docs/GINKGO-SYSTEM-DIAGRAM.md` | Planta técnica da empresa em 12 diagramas ASCII. Todos os componentes e seus fluxos. |
 | `docs/GINKGO-BUILD-ORDER.md` | Ordem oficial de construção do zero ao primeiro cliente. 4 fases com gates binários. |
@@ -143,4 +146,4 @@ docs/prd/GINKGO-WORKSPACE-PRD.md
 
 ---
 
-*Ginkgo AI Systems — docs/INDEX.md v2.4.0 — Abril 2026*
+*Ginkgo AI Systems — docs/INDEX.md v2.5.0 — Abril 2026*

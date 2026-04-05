@@ -1,7 +1,7 @@
-# Ginkgo Source — Manual Técnico Operacional v1.0.0
+# Ginkgo Source — Manual Técnico Operacional v1.1.0
 
-> **Versão:** 1.0.0 | **Data:** Abril 2026  
-> **Status:** Definitivo / Operacional  
+> **Versão:** 1.1.0 | **Data:** Abril 2026  
+> **Status:** Definitivo / Executável  
 > **Princípio:** O Ginkgo Source é o sistema onde clientes entram e as soluções nascem.
 
 ---
@@ -64,7 +64,7 @@ O Ginkgo Source opera como um **pipeline de transformação** de demanda, seguin
 
 ## 3. Catálogo de Agentes-Base do Ginkgo Source
 
-Cada agente possui uma função única, entradas definidas, ferramentas autorizadas e formato de saída esperado.
+Cada agente possui uma função única, entradas definidas, ferramentas autorizadas e formato de saída esperado. Para detalhes sobre os contratos de cada agente, incluindo schemas de input/output, ferramentas permitidas e políticas de retry, consulte o documento [AGENT-CONTRACTS.md](AGENT-CONTRACTS.md).
 
 | Agente | Função | Entradas Típicas | Saídas Típicas |
 |---|---|---|---|
@@ -77,24 +77,24 @@ Cada agente possui uma função única, entradas definidas, ferramentas autoriza
 | **Source QA** | Audita consistência, clareza e segurança da solução. | Artefatos de execução, briefing, políticas. | Aprovação/reprovação com ajustes. |
 | **Source Success** | Fecha o ciclo operacional, garante continuidade e expansão. | Solução implantada, feedback do cliente. | Plano de continuidade, recomendações de expansão. |
 
-**Contrato Operacional dos Agentes:** Cada agente deve aderir a um contrato explícito que define seu propósito, inputs aceitos, ações proibidas, ferramentas permitidas, schema de output esperado, critérios de sucesso, condições de falha e regras de escalonamento.
+**Contrato Operacional dos Agentes:** Cada agente deve aderir a um contrato explícito que define seu propósito, inputs aceitos, ações proibidas, ferramentas permitidas, schema de output esperado, critérios de sucesso, condições de falha e regras de escalonamento. Detalhes completos em [AGENT-CONTRACTS.md](AGENT-CONTRACTS.md).
 
 ---
 
 ## 4. Pipeline de Operação e Jornada do Cliente
 
-O Ginkgo Source guia o cliente através de uma jornada estruturada, desde a captação da demanda até a expansão da solução.
+O Ginkgo Source guia o cliente através de uma jornada estruturada, desde a captação da demanda até a expansão da solução. Para uma visão detalhada dos estados do job e suas transições, consulte o documento [STATE-MACHINE-AUDIT.md](STATE-MACHINE-AUDIT.md).
 
 1.  **Entrada:** Cliente chega via landing page, formulário, WhatsApp, chat, etc.
 2.  **Leitura da Demanda:** O sistema identifica tipo de problema, urgência, complexidade e categoria de solução.
 3.  **Diagnóstico:** A demanda é convertida em um briefing claro e objetivo.
-4.  **Roteamento:** O router central escolhe os agentes especialistas que atuarão na demanda.
+4.  **Roteamento:** O router central escolhe os agentes especialistas que atuarão na demanda. As políticas de roteamento são detalhadas em [ROUTING-POLICY.md](ROUTING-POLICY.md).
 5.  **Produção:** Agentes constroem a proposta, escopo, workflow, interface, conteúdo e documentação.
 6.  **Validação:** O Agente QA revisa consistência, clareza e viabilidade da solução.
 7.  **Implantação:** A solução é ativada, documentada e entregue ao cliente.
 8.  **Expansão:** O cliente recebe melhorias, upgrades e novos módulos, garantindo retenção e upsell.
 
-**Estados do Sistema:** Todo pedido possui estados explícitos (`captured`, `diagnosing`, `in_execution`, `deployed`, etc.) para auditoria, dashboards e automação interna.
+**Estados do Sistema:** Todo pedido possui estados explícitos (`captured`, `diagnosing`, `in_execution`, `deployed`, etc.) para auditoria, dashboards e automação interna. Veja [STATE-MACHINE-AUDIT.md](STATE-MACHINE-AUDIT.md) para o diagrama completo da máquina de estados e especificação de auditoria.
 
 ---
 
@@ -116,7 +116,7 @@ Embora o manual seja agnóstico a ferramentas específicas, a lógica operaciona
 **Regras de Governança:**
 
 -   **Toda tarefa:** Deve ter objetivo, contexto, limite, saída esperada e status.
--   **Todo agente:** Deve ter função única, entradas definidas, ferramentas permitidas, formato de saída, critérios de falha e escalonamento.
+-   **Todo agente:** Deve ter função única, entradas definidas, ferramentas permitidas, formato de saída, critérios de falha e escalonamento. Detalhes em [AGENT-CONTRACTS.md](AGENT-CONTRACTS.md).
 -   **Toda entrega:** Deve passar por revisão lógica, comercial, técnica e validação final.
 
 **Metas Operacionais (Estágios de Evolução):**
@@ -141,4 +141,14 @@ O Ginkgo Source não é apenas uma agência, um SaaS ou um chatbot. É um **sist
 
 ---
 
-*Ginkgo AI Systems — docs/GINKGO-SOURCE-MANUAL.md v1.0.0 — Abril 2026*
+## 8. Arquitetura de Decisão e Governança
+
+Para aprofundar nos mecanismos de decisão e controle do Ginkgo Source, consulte os seguintes documentos:
+
+-   **[ROUTING-POLICY.md](ROUTING-POLICY.md):** Detalha as políticas de roteamento do Agentic Router, incluindo classificação de demanda, regras de complexidade, sequência de agentes, paralelização, bloqueios e escalonamentos.
+-   **[AGENT-CONTRACTS.md](AGENT-CONTRACTS.md):** Especifica os contratos tipados para cada agente, definindo schemas de input/output, ferramentas permitidas, condições de falha e políticas de retry.
+-   **[STATE-MACHINE-AUDIT.md](STATE-MACHINE-AUDIT.md):** Apresenta a máquina de estados completa para os jobs, transições permitidas, responsabilidades por estado e a especificação do Execution Ledger para auditoria e telemetria.
+
+---
+
+*Ginkgo AI Systems — docs/GINKGO-SOURCE-MANUAL.md v1.1.0 — Abril 2026*
