@@ -1,8 +1,8 @@
-# Ginkgo Source — Manual Técnico Operacional v1.1.0
+# Ginkgo Source — Manual Técnico Operacional v1.2.0
 
-> **Versão:** 1.1.0 | **Data:** Abril 2026  
+> **Versão:** 1.2.0 | **Data:** Abril 2026  
 > **Status:** Definitivo / Executável  
-> **Princípio:** O Ginkgo Source é o sistema onde clientes entram e as soluções nascem.
+> **Princípio:** O Ginkgo Source é o sistema onde clientes entram e as soluções nascem, orquestrado pelo CEO Fantasma e governado pela Human Oversight Layer.
 
 ---
 
@@ -26,30 +26,60 @@ O **Ginkgo Source** é a plataforma operacional central da Ginkgo AI Systems, pr
 
 ## 2. Arquitetura Lógica e Princípios Operacionais
 
-O Ginkgo Source opera como um **pipeline de transformação** de demanda, seguindo princípios de arquitetura que garantem escalabilidade, auditabilidade e reuso.
+O Ginkgo Source opera como um **pipeline de transformação** de demanda, orquestrado pelo **CEO Fantasma** e governado pela **Human Oversight Layer**, seguindo princípios de arquitetura que garantem escalabilidade, auditabilidade e reuso.
 
-```text
-[Canais de Entrada]
-  ├─ Site / Landing Page
-  ├─ Formulário Inteligente
-  ├─ WhatsApp / Chat
-  ├─ API / Dashboard Interno
-        ↓
-[Camada de Entrada] -> Captura e normaliza pedidos
-        ↓
-[Camada de Diagnóstico] -> Transforma demanda em problema compreensível
-        ↓
-[Camada de Roteamento] -> Despacha para agentes, define ordem de execução
-        ↓
-[Camada de Agentes] -> Execução especializada (Intake, Discovery, Architect, Builders, QA, Success)
-        ↓
-[Camada de Base de Ativos] -> Memória operacional reutilizável (prompts, templates, workflows)
-        ↓
-[Camada de Execução] -> Geração de artefatos (workflows, frontends, conteúdo)
-        ↓
-[Camada de Validação] -> Controle de qualidade (coerência, completude, segurança)
-        ↓
-[Camada de Implantação] -> Ativação da solução e continuidade operacional
+```mermaid
+graph TD
+    subgraph CEO Fantasma
+        direction LR
+        MemóriaSituacional[Memória Situacional]
+        PainelExecutivo[Painel Executivo]
+        CoordenadorAgentes[Coordenador de Agentes]
+        MemóriaSituacional --> CoordenadorAgentes
+        PainelExecutivo --> CoordenadorAgentes
+    end
+
+    subgraph Human Oversight Layer
+        direction LR
+        PolicyEngineHOL[Policy Engine]
+        ApprovalGates[Approval Gates]
+        AnomalyDetection[Anomaly Detection]
+        HumanFeedbackLoop[Human Feedback Loop]
+        PolicyEngineHOL --> ApprovalGates
+        AnomalyDetection --> HumanFeedbackLoop
+    end
+
+    subgraph Ginkgo Agent OS Core
+        direction LR
+        Canais[Canais de Entrada]
+        InputNormalizer[Input Normalizer]
+        IntentRouter[Intent Router]
+        AgentRuntime[Agent Runtime]
+        MemorySystem[Memory System]
+        ToolBus[Tool Bus]
+        AuditLogger[Audit Logger]
+        AnalyticsLayer[Analytics Layer]
+
+        Canais --> InputNormalizer
+        InputNormalizer --> IntentRouter
+        IntentRouter --> AgentRuntime
+        AgentRuntime --> MemorySystem
+        AgentRuntime --> ToolBus
+        AgentRuntime --> AuditLogger
+        AuditLogger --> AnalyticsLayer
+    end
+
+    CoordenadorAgentes --> IntentRouter
+    CoordenadorAgentes --> PolicyEngineHOL
+    PolicyEngineHOL --> AgentRuntime
+    AuditLogger --> AnomalyDetection
+    ApprovalGates --> CoordenadorAgentes
+    AnomalyDetection --> CoordenadorAgentes
+    HumanFeedbackLoop --> CoordenadorAgentes
+
+    style CEO Fantasma fill:#f9f,stroke:#333,stroke-width:2px
+    style Human Oversight Layer fill:#ccf,stroke:#333,stroke-width:2px
+    style Ginkgo Agent OS Core fill:#afa,stroke:#333,stroke-width:2px
 ```
 
 **Princípios de Arquitetura:**
@@ -59,6 +89,8 @@ O Ginkgo Source opera como um **pipeline de transformação** de demanda, seguin
 3.  **Toda Tarefa Produz Artefato:** Cada etapa gera uma saída objetiva (briefing, escopo, plano técnico, workflow, layout, etc.).
 4.  **Reuso é Prioridade:** O sistema busca reutilizar templates, prompts, blocos lógicos e integrações antes de criar do zero.
 5.  **Toda Solução Classificável:** Cada entrega se encaixa em uma taxonomia clara para facilitar automação futura e análise.
+6.  **CEO Fantasma como Maestro:** O orquestrador executivo central que transforma contexto em prioridade e prioridade em ação.
+7.  **Humano no Loop:** A autonomia da IA é sempre proporcional ao risco da ação e à capacidade de observabilidade, correção e intervenção humana, garantida pela Human Oversight Layer.
 
 ---
 
@@ -104,9 +136,10 @@ Embora o manual seja agnóstico a ferramentas específicas, a lógica operaciona
 
 | Camada | Componentes Conceituais | Ferramentas Chave (Exemplos) |
 |---|---|---|
-| **Orquestração** | Router, fila de tarefas, agentes especializados. | OpenClaw, BullMQ, n8n. |
+| **Orquestração** | CEO Fantasma, Router, fila de tarefas, agentes especializados. | CEO Fantasma (Claude Opus 4.6), OpenClaw, BullMQ, n8n. |
 | **Execução** | Runtime de agentes, automações, construtor de interface, geração de conteúdo. | Claude Code, Fastify/Node.js, MoviePy, React/Next.js. |
 | **Memória** | Histórico de clientes, projetos, preferências, ativos. | Supabase (Postgres), Redis, Supabase Vector/Qdrant. |
+| **Governança** | Human Oversight Layer, Policy Engine, Approval Gates, Anomaly Detection. | Custom (baseado em Supabase, n8n, dashboards). |
 | **Entrega** | Dashboard, portal do cliente, documentação, suporte. | Next.js, Chatwoot, Supabase Storage. |
 
 ---
@@ -118,6 +151,7 @@ Embora o manual seja agnóstico a ferramentas específicas, a lógica operaciona
 -   **Toda tarefa:** Deve ter objetivo, contexto, limite, saída esperada e status.
 -   **Todo agente:** Deve ter função única, entradas definidas, ferramentas permitidas, formato de saída, critérios de falha e escalonamento. Detalhes em [AGENT-CONTRACTS.md](AGENT-CONTRACTS.md).
 -   **Toda entrega:** Deve passar por revisão lógica, comercial, técnica e validação final.
+-   **Human Oversight Layer:** Garante que a autonomia da IA seja proporcional ao risco da ação. Detalhes em [HUMAN-OVERSIGHT-GOVERNANCE.md](HUMAN-OVERSIGHT-GOVERNANCE.md).
 
 **Metas Operacionais (Estágios de Evolução):**
 
@@ -148,7 +182,9 @@ Para aprofundar nos mecanismos de decisão e controle do Ginkgo Source, consulte
 -   **[ROUTING-POLICY.md](ROUTING-POLICY.md):** Detalha as políticas de roteamento do Agentic Router, incluindo classificação de demanda, regras de complexidade, sequência de agentes, paralelização, bloqueios e escalonamentos.
 -   **[AGENT-CONTRACTS.md](AGENT-CONTRACTS.md):** Especifica os contratos tipados para cada agente, definindo schemas de input/output, ferramentas permitidas, condições de falha e políticas de retry.
 -   **[STATE-MACHINE-AUDIT.md](STATE-MACHINE-AUDIT.md):** Apresenta a máquina de estados completa para os jobs, transições permitidas, responsabilidades por estado e a especificação do Execution Ledger para auditoria e telemetria.
+-   **[HUMAN-OVERSIGHT-GOVERNANCE.md](HUMAN-OVERSIGHT-GOVERNANCE.md):** Formaliza a camada de observabilidade, controle humano e governança por risco, definindo níveis de risco, autonomia da IA e fluxos de intervenção humana.
+-   **[CEO-GHOST-SPEC.md](CEO-GHOST-SPEC.md):** Especifica o CEO Fantasma como o orquestrador executivo central, detalhando sua persona, arquitetura em camadas, matriz de autonomia e interfaces de interação.
 
 ---
 
-*Ginkgo AI Systems — docs/GINKGO-SOURCE-MANUAL.md v1.1.0 — Abril 2026*
+*Ginkgo AI Systems — docs/GINKGO-SOURCE-MANUAL.md v1.2.0 — Abril 2026*

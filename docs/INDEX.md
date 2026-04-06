@@ -12,11 +12,11 @@
 | Documento | Descrição |
 |-----------|-----------|
 | `README.md` | Referência técnica oficial do repositório. Stack, arquitetura, agentes, integrações, modelo de dados e roadmap. **Comece aqui.** |
-| `docs/GINKGO-SOURCE-MANUAL.md` | **ATUALIZADO** — Manual Técnico Operacional do Ginkgo Source (v1.1.0). Visão, arquitetura, agentes, produtos, jornada do cliente, governança e roadmap. |
-| `docs/ROUTING-POLICY.md` | **NOVO** — Especificação de Roteamento e Políticas do Agentic Router. |
-| `docs/AGENT-CONTRACTS.md` | **NOVO** — Contratos Tipados para Agentes Especialistas. |
-| `docs/STATE-MACHINE-AUDIT.md` | **NOVO** — Máquina de Estados e Especificação de Auditoria para Jobs. |
-| `docs/MANUAL_SAAS_1.md` | Manual definitivo em 9 seções. Visão completa de produto, stack, deploy e boas práticas. |
+| `docs/GINKGO-SOURCE-MANUAL.md` | Manual Técnico Operacional do Ginkgo Source v1.2.0. Visão, arquitetura, agentes, produtos, jornada do cliente, governança e roadmap. |
+| `docs/ROUTING-POLICY.md` | Especificação de Roteamento e Políticas do Agentic Router. |
+| `docs/AGENT-CONTRACTS.md` | Contratos Tipados para Agentes Especialistas. |
+| `docs/STATE-MACHINE-AUDIT.md` | Máquina de Estados e Especificação de Auditoria para Jobs. |
+| `docs/MANUAL_SAAS.md` | Manual definitivo em 9 seções. Visão completa de produto, stack, deploy e boas práticas. |
 | `docs/GINKGO-SYSTEM-DIAGRAM.md` | Planta técnica da empresa em 12 diagramas ASCII. Todos os componentes e seus fluxos. |
 | `docs/GINKGO-BUILD-ORDER.md` | Ordem oficial de construção do zero ao primeiro cliente. 4 fases com gates binários. |
 | `docs/SPRINT-1-EXECUTION.md` | Plano de execução detalhado do Sprint 1. Claude Code vs AIOX vs Ralph Loop. |
@@ -28,7 +28,7 @@
 
 | Documento | Descrição |
 |-----------|-----------|
-| `docs/prd/GINKGO-AGENT-OS-PRD.md` | **NOVO** — PRD Técnico do Ginkgo Agent OS. Runtime unificado, memória hierárquica, barramento de ferramentas, políticas de governança e auditoria. |
+| `docs/prd/GINKGO-AGENT-OS-PRD.md` | PRD Técnico do Ginkgo Agent OS v2.0.0. Runtime unificado, memória hierárquica, barramento de ferramentas, políticas de governança e auditoria. |
 | `docs/prd/GINKGO-WORKSPACE-PRD.md` | PRD completo do Ginkgo Workspace. 4 agentes, 5 áreas de interface, tokenização, skills, fases. |
 | `docs/prd/MARKET-REPORT.md` | Relatório de mercado completo. Panorama, dores, concorrência, gaps e blueprint ideal. |
 | `docs/prd/GITHUB-GEMS.md` | Mapeamento de ferramentas open-source por categoria. Stack recomendado e prioridades P1/P2/P3. |
@@ -37,12 +37,14 @@
 
 ---
 
-## 3. Arquitetura de Sistema
+## 3. Arquitetura de Sistema (Core, Agentes, Governança)
 
 | Documento | Descrição |
 |-----------|-----------|
 | `docs/architecture/OPENCLAW-ARCHITECTURE.md` | Posicionamento do OpenClaw como runtime cognitivo central. Fronteira OpenClaw × n8n, blocos internos, fluxos por agente. |
 | `docs/architecture/AGENT-KERNEL.md` | Kernel de governança v1.5 Hardened. db singleton, execution_id, idempotência, debit atômico. |
+| `docs/HUMAN-OVERSIGHT-GOVERNANCE.md` | **NOVO** — Camada de Observabilidade, Controle Humano e Governança por Risco. |
+| `docs/CEO-GHOST-SPEC.md` | **NOVO** — Especificação do CEO Fantasma: Orquestrador Executivo Central. |
 | `docs/architecture/AGENT-SPEC.md` | Contrato de declaração de agentes. config.ts + prompt.ts + tools.ts sem tocar no kernel. |
 | `docs/architecture/TOOL-REGISTRY-v1.md` | Catálogo oficial de tools v1. Specs, permissões, billing impact, critérios de aprovação. |
 | `docs/architecture/MULTI-WORKSPACE-AUTH.md` | Especificação de autenticação multi-workspace. Cookie strategy, WorkspaceSwitcher, billing consolidado. |
@@ -120,7 +122,7 @@
 
 ```
 README.md
-  └── docs/MANUAL_SAAS_1.md
+  └── docs/MANUAL_SAAS.md
         └── docs/GINKGO-BUILD-ORDER.md
               └── docs/SPRINT-1-EXECUTION.md
                     ├── docs/MIGRATIONS-GUIDE.md
@@ -146,4 +148,4 @@ docs/prd/GINKGO-WORKSPACE-PRD.md
 
 ---
 
-*Ginkgo AI Systems — docs/INDEX.md v2.5.0 — Abril 2026*
+*Ginkgo AI Systems — docs/INDEX.md v2.6.0 — Abril 2026*
