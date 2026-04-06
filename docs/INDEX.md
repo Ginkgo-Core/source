@@ -11,6 +11,10 @@
 
 | Documento | Descrição |
 |-----------|-----------|
+| `docs/GINKGO-ARCHITECTURE-REPORT-V2.0.md` | **NOVO** — Relatório de Arquitetura Final "Sem Lacunas" (Ginkgo Agent OS v2.0). Consolida toda a arquitetura, preenche gaps e projeta a visão unificada. |
+
+| Documento | Descrição |
+|-----------|-----------|
 | `README.md` | Referência técnica oficial do repositório. Stack, arquitetura, agentes, integrações, modelo de dados e roadmap. **Comece aqui.** |
 | `docs/GINKGO-SOURCE-MANUAL.md` | Manual Técnico Operacional do Ginkgo Source v1.2.0. Visão, arquitetura, agentes, produtos, jornada do cliente, governança e roadmap. |
 | `docs/ROUTING-POLICY.md` | Especificação de Roteamento e Políticas do Agentic Router. |
@@ -148,4 +152,4 @@ docs/prd/GINKGO-WORKSPACE-PRD.md
 
 ---
 
-*Ginkgo AI Systems — docs/INDEX.md v2.6.0 — Abril 2026*
+*Ginkgo AI Systems — docs/INDEX.md v2.7.0 — Abril 2026*
