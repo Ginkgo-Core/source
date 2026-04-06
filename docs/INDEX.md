@@ -24,6 +24,7 @@
 | `docs/GINKGO-SYSTEM-DIAGRAM.md` | Planta técnica da empresa em 12 diagramas ASCII. Todos os componentes e seus fluxos. |
 | `docs/GINKGO-BUILD-ORDER.md` | Ordem oficial de construção do zero ao primeiro cliente. 4 fases com gates binários. |
 | `docs/SPRINT-1-EXECUTION.md` | Plano de execução detalhado do Sprint 1. Claude Code vs AIOX vs Ralph Loop. |
+| `docs/BUILD-GUIDE-MVP.md` | **NOVO** — Guia de Construção do MVP Leaf by Ginkgo (SDR Brann + WhatsApp + Dashboard + CRM). Instruções passo a passo para o Antigravity. |
 | `docs/ginkgo-permanent-context.md` | Contexto permanente para o Antigravity. Colar no topo de toda sessão de build. |
 
 ---
@@ -152,4 +153,4 @@ docs/prd/GINKGO-WORKSPACE-PRD.md
 
 ---
 
-*Ginkgo AI Systems — docs/INDEX.md v2.7.0 — Abril 2026*
+*Ginkgo AI Systems — docs/INDEX.md v2.8.0 — Abril 2026*
