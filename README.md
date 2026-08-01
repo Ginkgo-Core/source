@@ -1,13 +1,13 @@
 # Ginkgo Leaf
 
-Plataforma comercial de atendimento, CRM e operações conversacionais com agentes de IA.
+CRM comercial nativo em IA para organizar contatos, leads, oportunidades, conversas, agenda, vendas, suporte e relacionamento com clientes.
 
 **Status:** produto oficial em desenvolvimento  
 **Repositório canônico:** `ginkgoai/ginkgo-leaf`  
 **Kernel:** Ginkgo Tree  
-**Licença:** proprietária comercial
+**Licença atual:** proprietária comercial, com versões históricas sob MIT
 
-> Leaf é uma distribuição vertical do Ginkgo Tree. Este repositório contém somente o que é específico de atendimento, relacionamento, agenda, vendas e suporte. Identidade, tenancy, billing, políticas, auditoria, execução e white-label pertencem ao kernel compartilhado.
+> Leaf é primeiro um CRM. WhatsApp, atendimento, agentes conversacionais, agendamento e automações são superfícies operacionais do relacionamento registrado no CRM.
 
 ## Papel no ecossistema
 
@@ -15,93 +15,87 @@ Plataforma comercial de atendimento, CRM e operações conversacionais com agent
 AI Stack — laboratório aberto Apache-2.0
         │
         ▼
-Ginkgo Tree — kernel comercial e white-label OS
+Ginkgo Tree — autonomia, limites, memória e white-label
         │
-        └── Leaf — atendimento e CRM conversacional
+        └── Leaf — AI-native CRM
 ```
 
-## Escopo do produto
+## Escopo principal
 
-Leaf organiza a jornada completa de conversação empresarial:
-
-- atendimento multicanal;
+- contatos, empresas e histórico unificado;
+- leads, oportunidades, funis e etapas;
+- inbox e atendimento multicanal;
 - WhatsApp e canais conectados;
-- qualificação de leads;
-- CRM operacional;
-- agendamento e confirmação;
-- catálogo, arquivos e respostas com RAG;
-- histórico e memória do cliente;
-- handoff para atendentes humanos;
-- follow-up, cobrança e pós-venda;
-- indicadores de atendimento, conversão e SLA;
+- qualificação e distribuição de leads;
+- agenda, confirmação e reagendamento;
+- tarefas, follow-up, cobrança e pós-venda;
+- catálogo, documentos e respostas assistidas por conhecimento;
+- memória do cliente e contexto comercial;
+- handoff para operadores humanos;
+- métricas de atendimento, conversão, receita e SLA;
 - agentes configuráveis por organização;
 - implantação dedicada ou white-label mediante contrato.
 
 ## Fronteira de responsabilidades
 
-### Este repositório contém
+### Leaf contém
 
-- módulos de inbox, contatos, oportunidades e agenda;
-- jornadas e workflows específicos do Leaf;
-- interface, navegação e copy do produto;
-- conectores e adaptadores de atendimento;
-- políticas de risco específicas de comunicação com clientes;
-- testes e documentação da edição;
-- configurações de deploy do produto.
+- domínio de contatos, leads, oportunidades, pipelines e agenda;
+- inbox, jornadas e workflows de relacionamento;
+- interface, navegação e copy do CRM;
+- conectores específicos de atendimento e vendas;
+- políticas de risco de comunicação com clientes;
+- testes, documentação e deploy da edição.
 
 ### Ginkgo Tree contém
 
-- autenticação, organizações, membership e RBAC;
-- isolamento multi-tenant;
-- billing, planos, metering e carteira de tokens;
-- agent runtime, skills e permissões;
-- filas, approvals, auditoria e evidências;
-- secrets boundary;
-- white-label, temas e domínios;
-- componentes compartilhados e contratos de extensão.
+- autenticação, organizações, RBAC e multi-tenancy;
+- billing, metering, orçamento e carteira de tokens;
+- agent runtime, autonomia, skills e permissões;
+- approvals, auditoria, evidências e secrets boundary;
+- Laplace para conhecimento, RAG, memória e proveniência;
+- white-label, temas, domínios e componentes compartilhados.
 
-O código do kernel não deve ser copiado para Leaf. O produto deve consumir pacotes privados e versionados do namespace `@ginkgo/*`.
+Leaf deve consumir pacotes privados versionados `@ginkgo/*`; o kernel não deve ser copiado para este repositório.
 
 ## Arquitetura de alto nível
 
 ```text
-Operador / Cliente
+Cliente / Operador
         │
         ▼
-Leaf Web ──► Leaf API / módulos de domínio
-                  │
-                  ├──► Ginkgo Tree kernel
-                  ├──► Worker / filas
-                  ├──► n8n como executor limitado
-                  ├──► Evolution API / canais
-                  └──► PostgreSQL, Redis e memória por tenant
+Leaf CRM
+  ├── contatos e histórico
+  ├── leads, pipeline e agenda
+  ├── inbox e atendimento
+  ├── agentes e automações
+  └── métricas comerciais
+        │
+        ├──► Ginkgo Tree
+        ├──► Laplace
+        ├──► workers / n8n limitado
+        └──► canais e sistemas autorizados
 ```
 
 ## Princípios
 
-1. **Tenant obrigatório:** toda operação é escopada por organização.
-2. **Handoff honesto:** o agente deve transferir quando não possui autorização ou confiança suficiente.
-3. **Evidência antes de afirmação:** RAG e ações externas devem registrar fonte e resultado.
-4. **Aprovação por risco:** ações financeiras, destrutivas ou sensíveis exigem política e aprovação.
-5. **Executor cego:** n8n executa tarefas delimitadas e não recebe segredos mestres da plataforma.
-6. **Produto não duplica kernel:** melhorias reutilizáveis retornam ao Ginkgo Tree.
+1. **CRM como fonte operacional:** conversas, tarefas e automações atualizam registros rastreáveis.
+2. **Tenant obrigatório:** toda operação é escopada por organização.
+3. **Handoff honesto:** o agente transfere quando falta autorização, contexto ou confiança.
+4. **Evidência antes da afirmação:** conhecimento e ações externas registram fonte e resultado.
+5. **Aprovação por risco:** dinheiro, exclusão e comunicações sensíveis seguem políticas.
+6. **Produto não duplica kernel:** capacidades reutilizáveis retornam ao Ginkgo Tree.
 
 ## Desenvolvimento
 
-Antes de alterar o produto, identifique onde a mudança pertence:
+- comportamento compartilhado → `ginkgo-tree`;
+- CRM e relacionamento → `ginkgo-leaf`;
+- exemplo genérico sanitizado → `ai-stack`.
 
-- comportamento reutilizável por várias edições → `ginkgo-tree`;
-- comportamento exclusivo de atendimento/CRM → `ginkgo-leaf`;
-- exemplo genérico e sanitizado → `ai-stack`.
+Nunca versione credenciais, conversas reais, dados de clientes, exports de produção ou webhooks ativos.
 
-Nunca versione credenciais, dados de clientes, exports de produção, conversas ou caminhos de webhook ativos.
+## Licenciamento
 
-## Documentação
+Versões históricas foram publicadas sob MIT e permanecem cobertas por essa concessão, preservada em `LICENSES/MIT-2025.txt`. Novas revisões proprietárias seguem `LICENSE` e `LICENSING.md`.
 
-Documentos de implementação existentes permanecem em `docs/`. Novas decisões que alterem contratos com o kernel devem registrar a versão de Ginkgo Tree suportada e a estratégia de migração.
-
-## Licença
-
-Este software é proprietário e comercial. Uso, implantação, hospedagem, distribuição, white-label, OEM ou acesso ao código dependem de autorização escrita da Ginkgo AI Systems.
-
-Consulte [`LICENSE`](LICENSE).
+Produção, hospedagem, distribuição, white-label, OEM e acesso ao código dependem de autorização escrita da Ginkgo AI Systems.
