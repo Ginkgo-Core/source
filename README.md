@@ -1,162 +1,107 @@
-# Ginkgo Source
-## Plataforma Operacional para Criação e Entrega de Soluções Digitais com IA
+# Ginkgo Leaf
 
-> O **Ginkgo Source** é o sistema onde clientes entram e as soluções nascem. Ele atua como o núcleo de conversão entre intenção e execução, coordenando uma malha de agentes, workflows e sistemas inteligentes para entregar automações, aplicações, sites e operações de IA.
-> **Versão:** 1.0.0 | **Data:** Abril 2026
-> **Filosofia:** Da demanda à operação. Você pede. O Source estrutura. A Ginkgo entrega.
+Plataforma comercial de atendimento, CRM e operações conversacionais com agentes de IA.
 
----
+**Status:** produto oficial em desenvolvimento  
+**Repositório canônico:** `ginkgoai/ginkgo-leaf`  
+**Kernel:** Ginkgo Tree  
+**Licença:** proprietária comercial
 
-## Índice
+> Leaf é uma distribuição vertical do Ginkgo Tree. Este repositório contém somente o que é específico de atendimento, relacionamento, agenda, vendas e suporte. Identidade, tenancy, billing, políticas, auditoria, execução e white-label pertencem ao kernel compartilhado.
 
-1.  [Visão Geral](#1-visão-geral)
-2.  [Arquitetura do Sistema](#2-arquitetura-do-sistema)
-3.  [Catálogo de Agentes-Base](#3-catálogo-de-agentes-base)
-4.  [Pipeline de Operação e Jornada do Cliente](#4-pipeline-de-operação-e-jornada-do-cliente)
-5.  [Stack Tecnológica Conceitual](#5-stack-tecnológica-conceitual)
-6.  [Princípios de Governança](#6-princípios-de-governança)
-7.  [Posicionamento Estratégico](#7-posicionamento-estratégico)
-8.  [Documentação Completa](#8-documentação-completa)
-
----
-
-## 1. Visão Geral
-
-O Ginkgo Source é a plataforma operacional central da Ginkgo AI Systems. Ele transforma demandas empresariais em soluções operacionais concretas, atuando como um **sistema operacional de agentes** onde cada agente é um módulo inteligente com identidade, memória, skills, ferramentas, permissões e telemetria.
-
-**Missão Computacional:** Converter uma intenção humana imperfeita em uma solução estruturada, rastreável, modular e implantável.
-
-**O que o Ginkgo Source entrega:**
-
-| Linha de Produto | Descrição | Exemplos |
-|---|---|---|
-| **Soluções Prontas** | Pacotes padronizados com implantação rápida. | Atendimento IA, Social Media IA, Gestão/Ops IA, Landing Pages, Dashboards. |
-| **Soluções Híbridas** | Base pronta com adaptações por nicho, canal ou processo. | Pacote de Atendimento IA com integração CRM e voz. |
-| **Soluções Personalizadas** | Projetos criados sob demanda para necessidades únicas. | Agentes exclusivos, workflows complexos, apps próprios, portais internos. |
-
----
-
-## 2. Arquitetura do Sistema
-
-O Ginkgo Source opera como um **pipeline de transformação** de demanda, seguindo princípios de arquitetura que garantem escalabilidade, auditabilidade e reuso.
+## Papel no ecossistema
 
 ```text
-[Canais de Entrada]
-  ├─ Site / Landing Page
-  ├─ Formulário Inteligente
-  ├─ WhatsApp / Chat
-  ├─ API / Dashboard Interno
-        ↓
-[Camada de Entrada] -> Captura e normaliza pedidos
-        ↓
-[Camada de Diagnóstico] -> Transforma demanda em problema compreensível
-        ↓
-[Camada de Roteamento] -> Despacha para agentes, define ordem de execução
-        ↓
-[Camada de Agentes] -> Execução especializada (Intake, Discovery, Architect, Builders, QA, Success)
-        ↓
-[Camada de Base de Ativos] -> Memória operacional reutilizável (prompts, templates, workflows)
-        ↓
-[Camada de Execução] -> Geração de artefatos (workflows, frontends, conteúdo)
-        ↓
-[Camada de Validação] -> Controle de qualidade (coerência, completude, segurança)
-        ↓
-[Camada de Implantação] -> Ativação da solução e continuidade operacional
+AI Stack — laboratório aberto Apache-2.0
+        │
+        ▼
+Ginkgo Tree — kernel comercial e white-label OS
+        │
+        └── Leaf — atendimento e CRM conversacional
 ```
 
-**Princípios de Arquitetura:**
+## Escopo do produto
 
-1.  **Separação entre Pensar, Decidir e Executar:** O sistema não concentra tudo em um único agente, reduzindo alucinação operacional e aumentando o reuso.
-2.  **O Router Não é Executor:** O router central classifica, prioriza, delega e consolida, mas não executa tarefas complexas.
-3.  **Toda Tarefa Produz Artefato:** Cada etapa gera uma saída objetiva (briefing, escopo, plano técnico, workflow, layout, etc.).
-4.  **Reuso é Prioridade:** O sistema busca reutilizar templates, prompts, blocos lógicos e integrações antes de criar do zero.
-5.  **Toda Solução Classificável:** Cada entrega se encaixa em uma taxonomia clara para facilitar automação futura e análise.
+Leaf organiza a jornada completa de conversação empresarial:
 
----
+- atendimento multicanal;
+- WhatsApp e canais conectados;
+- qualificação de leads;
+- CRM operacional;
+- agendamento e confirmação;
+- catálogo, arquivos e respostas com RAG;
+- histórico e memória do cliente;
+- handoff para atendentes humanos;
+- follow-up, cobrança e pós-venda;
+- indicadores de atendimento, conversão e SLA;
+- agentes configuráveis por organização;
+- implantação dedicada ou white-label mediante contrato.
 
-## 3. Catálogo de Agentes-Base do Ginkgo Source
+## Fronteira de responsabilidades
 
-Cada agente possui uma função única, entradas definidas, ferramentas autorizadas e formato de saída esperado.
+### Este repositório contém
 
-| Agente | Função | Entradas Típicas | Saídas Típicas |
-|---|---|---|---|
-| **Source Intake** | Normaliza entrada e prepara triagem. | Pedido bruto (texto, formulário, mensagem). | Demanda estruturada. |
-| **Source Discovery** | Refina o problema real, reduz ambiguidade. | Demanda estruturada. | Briefing técnico-comercial. |
-| **Source Architect** | Desenha a solução macro e define a composição. | Briefing, histórico, ativos reutilizáveis. | Arquitetura proposta, módulos, plano de implementação. |
-| **Source Builder Flow** | Constrói lógica operacional e automações. | Especificação de fluxo, blueprint executável. | Workflow funcional, integrações, regras. |
-| **Source Builder Interface** | Produz interfaces de uso (front-end). | Arquitetura de interface, estrutura de telas. | Landing pages, dashboards, portais, apps leves. |
-| **Source Content** | Cria ativos de comunicação relacionados à solução. | Briefing de comunicação, contexto da solução. | Copy, roteiros, posts, criativos. |
-| **Source QA** | Audita consistência, clareza e segurança da solução. | Artefatos de execução, briefing, políticas. | Aprovação/reprovação com ajustes. |
-| **Source Success** | Fecha o ciclo operacional, garante continuidade e expansão. | Solução implantada, feedback do cliente. | Plano de continuidade, recomendações de expansão. |
+- módulos de inbox, contatos, oportunidades e agenda;
+- jornadas e workflows específicos do Leaf;
+- interface, navegação e copy do produto;
+- conectores e adaptadores de atendimento;
+- políticas de risco específicas de comunicação com clientes;
+- testes e documentação da edição;
+- configurações de deploy do produto.
 
-**Contrato Operacional dos Agentes:** Cada agente deve aderir a um contrato explícito que define seu propósito, inputs aceitos, ações proibidas, ferramentas permitidas, schema de output esperado, critérios de sucesso, condições de falha e regras de escalonamento.
+### Ginkgo Tree contém
 
----
+- autenticação, organizações, membership e RBAC;
+- isolamento multi-tenant;
+- billing, planos, metering e carteira de tokens;
+- agent runtime, skills e permissões;
+- filas, approvals, auditoria e evidências;
+- secrets boundary;
+- white-label, temas e domínios;
+- componentes compartilhados e contratos de extensão.
 
-## 4. Pipeline de Operação e Jornada do Cliente
+O código do kernel não deve ser copiado para Leaf. O produto deve consumir pacotes privados e versionados do namespace `@ginkgo/*`.
 
-O Ginkgo Source guia o cliente através de uma jornada estruturada, desde a captação da demanda até a expansão da solução.
+## Arquitetura de alto nível
 
-1.  **Entrada:** Cliente chega via landing page, formulário, WhatsApp, chat, etc.
-2.  **Leitura da Demanda:** O sistema identifica tipo de problema, urgência, complexidade e categoria de solução.
-3.  **Diagnóstico:** A demanda é convertida em um briefing claro e objetivo.
-4.  **Roteamento:** O router central escolhe os agentes especialistas que atuarão na demanda.
-5.  **Produção:** Agentes constroem a proposta, escopo, workflow, interface, conteúdo e documentação.
-6.  **Validação:** O Agente QA revisa consistência, clareza e viabilidade da solução.
-7.  **Implantação:** A solução é ativada, documentada e entregue ao cliente.
-8.  **Expansão:** O cliente recebe melhorias, upgrades e novos módulos, garantindo retenção e upsell.
+```text
+Operador / Cliente
+        │
+        ▼
+Leaf Web ──► Leaf API / módulos de domínio
+                  │
+                  ├──► Ginkgo Tree kernel
+                  ├──► Worker / filas
+                  ├──► n8n como executor limitado
+                  ├──► Evolution API / canais
+                  └──► PostgreSQL, Redis e memória por tenant
+```
 
-**Estados do Sistema:** Todo pedido possui estados explícitos (`captured`, `diagnosing`, `in_execution`, `deployed`, etc.) para auditoria, dashboards e automação interna.
+## Princípios
 
----
+1. **Tenant obrigatório:** toda operação é escopada por organização.
+2. **Handoff honesto:** o agente deve transferir quando não possui autorização ou confiança suficiente.
+3. **Evidência antes de afirmação:** RAG e ações externas devem registrar fonte e resultado.
+4. **Aprovação por risco:** ações financeiras, destrutivas ou sensíveis exigem política e aprovação.
+5. **Executor cego:** n8n executa tarefas delimitadas e não recebe segredos mestres da plataforma.
+6. **Produto não duplica kernel:** melhorias reutilizáveis retornam ao Ginkgo Tree.
 
-## 5. Stack Tecnológica Conceitual
+## Desenvolvimento
 
-Embora o manual seja agnóstico a ferramentas específicas, a lógica operacional sugere a seguinte stack conceitual:
+Antes de alterar o produto, identifique onde a mudança pertence:
 
-| Camada | Componentes Conceituais | Ferramentas Chave (Exemplos) |
-|---|---|---|
-| **Orquestração** | Router, fila de tarefas, agentes especializados. | OpenClaw, BullMQ, n8n. |
-| **Execução** | Runtime de agentes, automações, construtor de interface, geração de conteúdo. | Claude Code, Fastify/Node.js, MoviePy, React/Next.js. |
-| **Memória** | Histórico de clientes, projetos, preferências, ativos. | Supabase (Postgres), Redis, Supabase Vector/Qdrant. |
-| **Entrega** | Dashboard, portal do cliente, documentação, suporte. | Next.js, Chatwoot, Supabase Storage. |
+- comportamento reutilizável por várias edições → `ginkgo-tree`;
+- comportamento exclusivo de atendimento/CRM → `ginkgo-leaf`;
+- exemplo genérico e sanitizado → `ai-stack`.
 
----
+Nunca versione credenciais, dados de clientes, exports de produção, conversas ou caminhos de webhook ativos.
 
-## 6. Princípios de Governança
+## Documentação
 
-**Regras de Governança:**
+Documentos de implementação existentes permanecem em `docs/`. Novas decisões que alterem contratos com o kernel devem registrar a versão de Ginkgo Tree suportada e a estratégia de migração.
 
--   **Toda tarefa:** Deve ter objetivo, contexto, limite, saída esperada e status.
--   **Todo agente:** Deve ter função única, entradas definidas, ferramentas permitidas, formato de saída, critérios de falha e escalonamento.
--   **Toda entrega:** Deve passar por revisão lógica, comercial, técnica e validação final.
+## Licença
 
-**Metas Operacionais (Estágios de Evolução):**
+Este software é proprietário e comercial. Uso, implantação, hospedagem, distribuição, white-label, OEM ou acesso ao código dependem de autorização escrita da Ginkgo AI Systems.
 
-1.  **Estágio 1 (Agência Assistida por IA):** Você supervisiona a maior parte das operações.
-2.  **Estágio 2 (Agência Operada por IA com Revisão Humana):** Agentes executam 70-80% das tarefas, com sua revisão estratégica.
-3.  **Estágio 3 (Agência Semi-Autônoma):** Você atua como diretor de estratégia e validação, com alta autonomia dos agentes.
-
----
-
-## 7. Posicionamento Estratégico
-
-O Ginkgo Source não é apenas uma agência, um SaaS ou um chatbot. É um **sistema operacional de criação e entrega de soluções digitais com IA e automação**.
-
-**Frases-Mãe de Posicionamento:**
-
--   "Onde sua necessidade vira sistema."
--   "O núcleo onde soluções nascem."
--   "Da demanda à operação."
--   "Entre a ideia e a implantação, existe o Source.""
--   "Você pede. O Source estrutura. A Ginkgo entrega."
-
----
-
-## 8. Documentação Completa
-
-Para uma visão aprofundada de todos os componentes, arquitetura e guias de implementação, consulte o [Índice da Documentação Completa](docs/INDEX.md).
-
----
-
-*Ginkgo AI Systems — Ginkgo Source README v1.0.0 — Abril 2026*
+Consulte [`LICENSE`](LICENSE).
